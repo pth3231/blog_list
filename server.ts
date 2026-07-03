@@ -1,17 +1,18 @@
-import express from 'express';
-import morgan from 'morgan';
-import Config from './utils/config';
+import express from 'express'
+import morgan from 'morgan'
+import Config from './utils/config'
 
-const app = express();
-const config = new Config();
-const PORT = config.getPort();
+const app = express()
+const config = new Config()
 
-app.use(morgan('dev'));
+const PORT = config.getPort()
 
-app.get("/api/v1", (req, res) => {
-    res.send("This is api v1 entry");
-});
+app.use(morgan('dev'))
+
+app.get('/api/v1', (_, res) => {
+    res.send('This is api v1 entry')
+})
 
 app.listen(PORT, () => {
-    console.info(`Express TS is running at port ${PORT}`);
-});
+    console.info(`Express TS is running at port ${PORT}`)
+})

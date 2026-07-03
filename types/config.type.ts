@@ -1,4 +1,4 @@
 export default interface IConfig {
-    getPort(): number;
-    getMongoURI(): string;
+  getPort(): number
+  getMongoURI(): string
 }

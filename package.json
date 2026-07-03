@@ -2,12 +2,15 @@
   "name": "blog_list",
   "version": "1.0.0",
   "description": "",
+  "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "dev": "npx ts-node server.ts",
+    "dev": "tsx watch server.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean": "rm -rf dist",
-    "build": "npm run clean && tsc"
+    "build": "npm run clean && tsc",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "repository": {
     "type": "git",
@@ -16,20 +19,23 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/pth3231/blog_list/issues"
   },
   "homepage": "https://github.com/pth3231/blog_list#readme",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/express": "^5.0.6",
     "@types/morgan": "^1.9.10",
-    "@types/node": "^26.0.1",
-    "ts-node": "^10.9.2",
-    "typescript": "^6.0.3"
+    "@types/node": "^26.1.0",
+    "eslint": "^10.6.0",
+    "tsx": "^4.23.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.62.1"
   },
   "dependencies": {
     "express": "^5.2.1",
+    "mongoose": "^9.7.3",
     "morgan": "^1.11.0"
   }
 }
