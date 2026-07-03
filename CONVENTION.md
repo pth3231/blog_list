@@ -14,6 +14,7 @@
 - All variables should be set to constants if possible
 - Parameters that must be stated, but not used, have to be clearly stated with `_` or `_<name>`
 - Use `<space>` for indentation, preferably 4 spaces
+- Must remove all redundant newlines `\n`, spaces,...
 
 # Semantic conventions
 - Do not add `;` at every line of code.
