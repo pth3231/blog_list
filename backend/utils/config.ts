@@ -1,7 +1,7 @@
 import { loadEnvFile } from 'node:process'
-import IConfig from '../types/config.type'
-import ILogger from '../types/logger.type'
-import ConsoleLogger from './logger'
+import IConfig from '@/types/config.type'
+import ILogger from '@/types/logger.type'
+import { ConsoleLogger } from '@/utils/logger'
 
 loadEnvFile()
 

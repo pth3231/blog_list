@@ -1,10 +1,11 @@
 import mongoose from 'mongoose'
+import { IPost } from '@/types/post.type'
 
-const postSchema = new mongoose.Schema({
-    title: String,
-    author: String,
-    url: String,
-    likes: Number
+const postSchema = new mongoose.Schema<IPost>({
+    title: { type: String, required: true },
+    author: { type: String, required: true },
+    url: { type: String, required: true },
+    likes: { type: Number, default: 0 }
 })
 
 export default mongoose.model('Post', postSchema)

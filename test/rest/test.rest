@@ -1,0 +1,11 @@
+GET http://localhost:3000/v1/posts
+###
+
+POST http://localhost:3000/v1/posts
+Content-Type: application/json
+
+{
+    "title": "New ways of finding a new electron!",
+    "author": "David Robinson",
+    "url": "http://example.app.com/david-rob"
+}
