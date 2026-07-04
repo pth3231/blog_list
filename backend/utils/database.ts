@@ -10,7 +10,7 @@ const dbConfig: IDBConfig = {
     uri: config.getMongoURI(),
     options: {
         maxPoolSize: 50,
-        minPoolSize: 10,
+        minPoolSize: 5,
         maxIdleTimeMS: 30000,
         socketTimeoutMS: 45000,
         serverSelectionTimeoutMS: 5000

@@ -41,7 +41,12 @@ export default class Config implements IConfig {
     }
 
     getMongoURI(): string {
-        const uri = process.env['MONGODB_URI']
+        let uri
+        if (process.env['NODE_ENV'] === 'test')
+            uri = process.env['TEST_MONGODB_URI']
+        else
+            uri = process.env['MONGODB_URI']
+
         if (!uri || uri.trim() === '') {
             this.logger.error('Cannot read the MONGO_URI variable')
             throw new Error('Cannot read the MONGO_URI variable', {

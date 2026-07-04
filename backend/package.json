@@ -6,11 +6,12 @@
   "main": "index.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx watch server.ts",
-    "test": "cross-env NODE_ENV=test",
-    "clean": "rm -rf dist",
-    "build": "cross-env NODE_ENV=production npm run clean && tsc",
+    "test": "cross-env NODE_ENV=test vitest run",
+    "clean": "rm -rf ./build/backend",
+    "build": "cross-env NODE_ENV=production npm run clean && tsc && tsc-alias",
     "lint": "cross-env NODE_ENV=development eslint .",
-    "lint:fix": "cross-env NODE_ENV=development eslint . --fix"
+    "lint:fix": "cross-env NODE_ENV=development eslint . --fix",
+    "start": "cross-env NODE_ENV=production NODE_PATH=./node_modules node ../build/backend/server.js"
   },
   "repository": {
     "type": "git",
@@ -31,7 +32,7 @@
     "@types/supertest": "^7.2.0",
     "eslint": "^10.6.0",
     "supertest": "^7.2.2",
-    "tsc-alias": "^1.8.17",
+    "tsc-alias": "^1.9.0",
     "tsx": "^4.23.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.62.1",

@@ -2,18 +2,26 @@ import ILogger from '@/types/logger.type'
 
 export class ConsoleLogger implements ILogger {
     info(...params: unknown[]) {
+        if (process.env['NODE_ENV'] === 'test')
+            return
         console.info(...params)
     }
 
     error(...params: unknown[]) {
+        if (process.env['NODE_ENV'] === 'test')
+            return
         console.error(...params)
     }
 
     warn(...params: unknown[]) {
+        if (process.env['NODE_ENV'] === 'test')
+            return
         console.warn(...params)
     }
 
     log(...params: unknown[]) {
+        if (process.env['NODE_ENV'] === 'test')
+            return
         console.log(...params)
     }
 }

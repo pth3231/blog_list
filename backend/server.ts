@@ -1,7 +1,7 @@
 import app from '@/app'
 import Config from '@/utils/config'
 import { connectDatabase } from '@/utils/database'
-import { ConsoleLogger } from './utils/logger'
+import { ConsoleLogger } from '@/utils/logger'
 
 const config = new Config()
 const logger = new ConsoleLogger()
