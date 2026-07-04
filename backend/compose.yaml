@@ -1,0 +1,14 @@
+services:
+  mongo:
+    image: mongo:noble
+    container_name: blog-list-mongo-test
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: blog_list_test
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-test-data:/data/db
+
+volumes:
+  mongo-test-data:
