@@ -1,26 +1,18 @@
-import express from 'express'
-import morgan from 'morgan'
+import app from '@/app'
 import Config from '@/utils/config'
 import { connectDatabase } from '@/utils/database'
-import postRouter from './routes/post.route'
+import { ConsoleLogger } from './utils/logger'
 
-const app = express()
 const config = new Config()
-
+const logger = new ConsoleLogger()
 const PORT = config.getPort()
 
-app.use(morgan('dev'))
-app.use(express.json())
-app.use('/v1/posts', postRouter)
-
-app.get('/v1', (_, res) => {
-    res.send('This is api v1 entry')
-})
-
-// Initialize the database connection before starting the server
 connectDatabase()
     .then(() => {
         app.listen(PORT, () => {
-            console.info(`Express TS is running at port ${PORT}`)
+            logger.info(`Express TS is running at port ${PORT}`)
         })
+    })
+    .catch((err) => {
+        logger.error('Failed to start server:', err)
     })

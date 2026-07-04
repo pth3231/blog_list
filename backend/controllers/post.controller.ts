@@ -4,7 +4,7 @@ import { IPost } from '@/types/post.type'
 
 const logger = new ConsoleLogger()
 
-export async function getAllPosts() {
+export async function getAllPosts(): Promise<Array<IPost>> {
     try {
         const allPostQuery = await Post.find({})
         return allPostQuery
