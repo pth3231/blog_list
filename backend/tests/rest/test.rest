@@ -5,7 +5,19 @@ POST http://localhost:3000/v1/posts
 Content-Type: application/json
 
 {
-    "title": "New ways of finding a new electron!",
-    "author": "David Robinson",
-    "url": "http://example.app.com/david-rob"
+    "title": "How to vibecode?",
+    "author": "Jaden Navis",
+    "url": "http://example.app.com/jaden-navis"
+}
+###
+
+GET http://localhost:3000/v1/posts/6a4fd4a6a717503f88b333db
+###
+
+POST http://localhost:3000/v1/posts/increaseLike
+Content-Type: application/json
+
+{
+    "id": "6a4fd4a6a717503f88b333db",
+    "increment": 1
 }

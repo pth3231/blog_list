@@ -20,7 +20,9 @@
 - Do not add `;` at every line of code.
 - Simplify `export` by appending everything on a line if possible
 - Only strings used for logging or contents should be put inside a pair of `""`. Otherwise, e.g. `process.env['PORT']`, should only be put inside a `''`
-    
+- Always use `null` instead of `undefined` for a more consistent typing 
+
+
 e.g.
 
 ```typescript
