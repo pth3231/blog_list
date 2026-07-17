@@ -2,3 +2,7 @@ dist
 node_modules
 .env
 build
+
+./opencode.json
+./package-lock.json
+./package.json
