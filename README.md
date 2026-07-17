@@ -91,7 +91,7 @@ Other commands:
 
 ```bash
 cd backend && npm test        # vitest integration suite (needs Mongo)
-cd backend && npm run build   # emits to ../build/backend
+cd backend && npm run build   # emits to backend/dist
 cd frontend && npm run build  # tsc -b && vite build
 ```
 

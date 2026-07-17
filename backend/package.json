@@ -7,11 +7,11 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx watch server.ts",
     "test": "cross-env NODE_ENV=test vitest run",
-    "clean": "rm -rf ./build/backend",
-    "build": "cross-env NODE_ENV=production npm run clean && tsc && tsc-alias",
+    "clean": "rm -rf ./dist",
+    "build": "cross-env NODE_ENV=production npm run clean && tsc -p tsconfig.build.json && tsc-alias",
     "lint": "cross-env NODE_ENV=development eslint .",
     "lint:fix": "cross-env NODE_ENV=development eslint . --fix",
-    "start": "cross-env NODE_ENV=production NODE_PATH=./node_modules node ../build/backend/server.js"
+    "start": "cross-env NODE_ENV=production node dist/server.js"
   },
   "repository": {
     "type": "git",

@@ -10,9 +10,9 @@ Two independent packages live side by side; there is **no root orchestration**. 
 Backend (run in `backend/`):
 - `npm run dev` — tsx watch on `server.ts` (NODE_ENV=development).
 - `npm test` — `vitest run` with NODE_ENV=test. **Requires a live MongoDB** (see below).
-- `npm run build` — `tsc` + `tsc-alias`, emits to `../build/backend`.
+- `npm run build` — `tsc` + `tsc-alias`, emits to `dist/` (inside `backend/`).
 - `npm run lint` / `npm run lint:fix`.
-- `npm start` — runs the compiled build (NODE_ENV=production, `NODE_PATH=./node_modules node ../build/backend/server.js`).
+- `npm start` — runs the compiled build (`NODE_ENV=production node dist/server.js`). In production the API also serves the built `frontend/dist` SPA on the same origin.
 
 Frontend (run in `frontend/`):
 - `npm run dev` (vite), `npm run build` (`tsc -b && vite build`), `npm run lint`, `npm run preview`.

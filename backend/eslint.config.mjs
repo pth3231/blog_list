@@ -47,5 +47,5 @@ export default defineConfig(
             ]
         }
     },
-    { ignores: ['eslint.config.mjs'] }
+    { ignores: ['eslint.config.mjs', 'dist'] }
 )
