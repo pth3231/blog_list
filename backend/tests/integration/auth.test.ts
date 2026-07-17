@@ -4,6 +4,9 @@ import { connectDatabase } from '@/utils/database'
 import { beforeAll, afterAll, describe, it, expect } from 'vitest'
 import User from '@/models/user.model'
 import mongoose from 'mongoose'
+import { uniqueDbUri } from './testDb'
+
+process.env['TEST_MONGODB_URI'] = uniqueDbUri('auth')
 
 const testUser = {
     username: 'testuser',

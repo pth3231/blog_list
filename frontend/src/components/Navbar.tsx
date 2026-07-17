@@ -1,9 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuthStore } from '../store/authStore'
 import ThemeToggle from './ThemeToggle'
 
 export default function Navbar() {
-    const { isAuthenticated, user, logout } = useAuth()
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+    const user = useAuthStore((state) => state.user)
+    const logout = useAuthStore((state) => state.logout)
     const navigate = useNavigate()
 
     const handleLogout = () => {

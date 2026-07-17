@@ -1,10 +1,11 @@
 import { Navigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuthStore } from '../store/authStore'
 import Spinner from './Spinner'
 import type { ReactNode } from 'react'
 
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
-    const { isAuthenticated, loading } = useAuth()
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+    const loading = useAuthStore((state) => state.loading)
     const location = useLocation()
 
     if (loading) return <Spinner label="Checking session…" />

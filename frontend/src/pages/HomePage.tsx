@@ -1,37 +1,25 @@
-import { useEffect, useState } from 'react'
-import { getPosts } from '../lib/api'
-import type { IPost } from '../lib/types'
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuthStore } from '../store/authStore'
+import { usePostsStore } from '../store/postsStore'
 import PostCard from '../components/PostCard'
 import Spinner from '../components/Spinner'
 import Alert from '../components/Alert'
 
 export default function HomePage() {
-    const { isAuthenticated } = useAuth()
-    const [posts, setPosts] = useState<IPost[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+    const allIds = usePostsStore((state) => state.allIds)
+    const byId = usePostsStore((state) => state.byId)
+    const loading = usePostsStore((state) => state.loading)
+    const error = usePostsStore((state) => state.error)
+    const fetchPosts = usePostsStore((state) => state.fetchPosts)
 
     useEffect(() => {
-        let active = true
-        getPosts()
-            .then((data) => {
-                if (active) setPosts(data)
-            })
-            .catch((err) => {
-                if (active) setError(err instanceof Error ? err.message : 'Failed to load posts')
-            })
-            .finally(() => {
-                if (active) setLoading(false)
-            })
-        return () => {
-            active = false
-        }
-    }, [])
+        void fetchPosts()
+    }, [fetchPosts])
 
     const handleDeleted = (id: string) => {
-        setPosts((current) => current.filter((post) => post._id !== id))
+        void usePostsStore.getState().removePost(id)
     }
 
     return (
@@ -57,7 +45,7 @@ export default function HomePage() {
 
             {loading && <Spinner label="Loading posts…" />}
             {error && <Alert message={error} />}
-            {!loading && !error && posts.length === 0 && (
+            {!loading && !error && allIds.length === 0 && (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-700 dark:bg-slate-900">
                     <p className="text-slate-500 dark:text-slate-400">No posts yet.</p>
                     {isAuthenticated ? (
@@ -72,10 +60,10 @@ export default function HomePage() {
                 </div>
             )}
 
-            {!loading && !error && posts.length > 0 && (
+            {!loading && !error && allIds.length > 0 && (
                 <div className="grid gap-4 sm:grid-cols-2">
-                    {posts.map((post) => (
-                        <PostCard key={post._id} post={post} onDeleted={handleDeleted} />
+                    {allIds.map((id) => (
+                        <PostCard key={id} post={byId[id]} onDeleted={handleDeleted} />
                     ))}
                 </div>
             )}

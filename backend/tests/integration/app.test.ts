@@ -6,6 +6,9 @@ import { IPost } from '@/types/post.type'
 import Post from '@/models/post.model'
 import User from '@/models/user.model'
 import mongoose from 'mongoose'
+import { uniqueDbUri } from './testDb'
+
+process.env['TEST_MONGODB_URI'] = uniqueDbUri('app')
 
 const initialData: IPost = {
     title: 'Testing title 1',

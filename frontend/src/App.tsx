@@ -3,6 +3,7 @@ import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
 import HomePage from './pages/HomePage'
 import PostDetailPage from './pages/PostDetailPage'
+import AuthorPage from './pages/AuthorPage'
 import CreatePostPage from './pages/CreatePostPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -16,6 +17,7 @@ export default function App() {
                 <Routes>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/posts/:id" element={<PostDetailPage />} />
+                    <Route path="/users/:username" element={<AuthorPage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
                     <Route

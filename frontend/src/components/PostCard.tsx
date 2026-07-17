@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
 import type { IPost } from '../lib/types'
-import { useAuth } from '../context/AuthContext'
-import { deletePost } from '../lib/api'
+import { useAuthStore } from '../store/authStore'
+import { usePostsStore } from '../store/postsStore'
 import LikeButton from './LikeButton'
+import AuthorLink from './AuthorLink'
 
 interface IPostCardProps {
     post: IPost
@@ -10,12 +11,13 @@ interface IPostCardProps {
 }
 
 export default function PostCard({ post, onDeleted }: IPostCardProps) {
-    const { isAuthenticated } = useAuth()
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+    const removePost = usePostsStore((state) => state.removePost)
 
     const handleDelete = async () => {
         if (!window.confirm(`Delete "${post.title}"? This cannot be undone.`)) return
         try {
-            await deletePost(post._id)
+            await removePost(post._id)
             onDeleted(post._id)
         } catch (err) {
             window.alert(err instanceof Error ? err.message : 'Failed to delete post')
@@ -32,7 +34,7 @@ export default function PostCard({ post, onDeleted }: IPostCardProps) {
                         </Link>
                     </h2>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        by <span className="font-medium text-slate-600 dark:text-slate-300">{post.author}</span>
+                        <AuthorLink author={post.author} owner={post.owner ?? null} />
                     </p>
                 </div>
                 {isAuthenticated && (
@@ -64,7 +66,7 @@ export default function PostCard({ post, onDeleted }: IPostCardProps) {
                         <path d="M15 3h6v6M10 14L21 3" />
                     </svg>
                 </a>
-                <LikeButton postId={post._id} initialLikes={post.likes} />
+                <LikeButton postId={post._id} />
             </div>
         </article>
     )

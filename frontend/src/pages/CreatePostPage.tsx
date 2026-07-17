@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { createPost } from '../lib/api'
-import { useAuth } from '../context/AuthContext'
+import { useAuthStore } from '../store/authStore'
+import { usePostsStore } from '../store/postsStore'
 import Alert from '../components/Alert'
 
 function validateUrl(value: string): boolean {
@@ -14,7 +14,8 @@ function validateUrl(value: string): boolean {
 }
 
 export default function CreatePostPage() {
-    const { user } = useAuth()
+    const user = useAuthStore((state) => state.user)
+    const addPost = usePostsStore((state) => state.addPost)
     const navigate = useNavigate()
     const [title, setTitle] = useState('')
     const [author, setAuthor] = useState(user?.username ?? '')
@@ -32,7 +33,7 @@ export default function CreatePostPage() {
 
         setSubmitting(true)
         try {
-            await createPost({ title: title.trim(), author: author.trim(), url: url.trim() })
+            await addPost({ title: title.trim(), author: author.trim(), url: url.trim() })
             navigate('/')
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to create post')

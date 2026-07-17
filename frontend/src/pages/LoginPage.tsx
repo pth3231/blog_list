@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuthStore } from '../store/authStore'
 import Alert from '../components/Alert'
 
 interface ILocationState {
@@ -8,7 +8,7 @@ interface ILocationState {
 }
 
 export default function LoginPage() {
-    const { login } = useAuth()
+    const login = useAuthStore((state) => state.login)
     const navigate = useNavigate()
     const location = useLocation()
     const from = (location.state as ILocationState | null)?.from ?? '/'

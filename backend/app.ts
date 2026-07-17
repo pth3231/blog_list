@@ -3,6 +3,7 @@ import morgan from 'morgan'
 import postRouter from '@/routes/post.route'
 import healthRouter from '@/routes/health.route'
 import authRouter from '@/routes/auth.route'
+import commentRouter from '@/routes/comment.route'
 
 const app = express()
 
@@ -11,6 +12,7 @@ app.use(express.json())
 app.use(healthRouter)
 app.use('/v1/auth', authRouter)
 app.use('/v1/posts', postRouter)
+app.use('/v1/posts', commentRouter)
 
 app.get('/v1', (_, res) => {
     res.send('This is api v1 entry')

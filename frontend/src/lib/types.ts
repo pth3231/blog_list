@@ -4,6 +4,16 @@ export interface IPost {
     author: string
     url: string
     likes: number
+    likedBy?: string[]
+    owner?: string | null
+}
+
+export interface IComment {
+    _id: string
+    post: string
+    author: string
+    content: string
+    createdAt: string
 }
 
 export interface IPublicUser {

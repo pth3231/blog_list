@@ -1,4 +1,4 @@
-import type { IAuthResult, INewPost, IPost, IPublicUser } from './types'
+import type { IAuthResult, IComment, INewPost, IPost, IPublicUser } from './types'
 
 const API_BASE = '/v1'
 
@@ -49,12 +49,18 @@ export function getMe(): Promise<IPublicUser> {
     return request<IPublicUser>('/auth/me', { method: 'GET' })
 }
 
-export function getPosts(): Promise<IPost[]> {
-    return request<IPost[]>('/posts', { method: 'GET' })
+export function getPosts(owner?: string): Promise<IPost[]> {
+    const query = owner ? `?owner=${encodeURIComponent(owner)}` : ''
+    return request<IPost[]>(`/posts${query}`, { method: 'GET' })
 }
 
 export function getPost(id: string): Promise<IPost> {
     return request<IPost>(`/posts/${id}`, { method: 'GET' })
+}
+
+export function getPostCount(owner: string): Promise<number> {
+    return request<{ count: number }>(`/posts/count?owner=${encodeURIComponent(owner)}`, { method: 'GET' })
+        .then((data) => data.count)
 }
 
 export function createPost(post: INewPost): Promise<IPost> {
@@ -68,9 +74,20 @@ export function deletePost(id: string): Promise<void> {
     return request<void>(`/posts/${id}`, { method: 'DELETE' })
 }
 
-export function likePost(id: string, increment = 1): Promise<void> {
-    return request<void>('/posts/increaseLike', {
+export function toggleLike(id: string, userId: string): Promise<{ likes: number, likedBy: string[] }> {
+    return request<{ likes: number, likedBy: string[] }>(`/posts/${id}/like`, {
         method: 'POST',
-        body: JSON.stringify({ id, increment })
+        body: JSON.stringify({ userId })
+    })
+}
+
+export function getComments(postId: string): Promise<IComment[]> {
+    return request<IComment[]>(`/posts/${postId}/comments`, { method: 'GET' })
+}
+
+export function addComment(postId: string, content: string): Promise<IComment> {
+    return request<IComment>(`/posts/${postId}/comments`, {
+        method: 'POST',
+        body: JSON.stringify({ content })
     })
 }

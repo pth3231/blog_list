@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuthStore } from '../store/authStore'
 import Alert from '../components/Alert'
 
 export default function RegisterPage() {
-    const { register } = useAuth()
+    const register = useAuthStore((state) => state.register)
     const navigate = useNavigate()
 
     const [username, setUsername] = useState('')

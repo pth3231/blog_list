@@ -1,41 +1,30 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getPost, deletePost } from '../lib/api'
-import type { IPost } from '../lib/types'
-import { useAuth } from '../context/AuthContext'
+import { useAuthStore } from '../store/authStore'
+import { usePostsStore } from '../store/postsStore'
 import LikeButton from '../components/LikeButton'
 import Spinner from '../components/Spinner'
 import Alert from '../components/Alert'
+import AuthorLink from '../components/AuthorLink'
+import CommentSection from '../components/CommentSection'
 
 export default function PostDetailPage() {
     const { id } = useParams<{ id: string }>()
-    const { isAuthenticated } = useAuth()
-    const [post, setPost] = useState<IPost | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+    const post = usePostsStore((state) => (id ? state.byId[id] : undefined))
+    const loading = usePostsStore((state) => state.loading)
+    const error = usePostsStore((state) => state.error)
+    const fetchPost = usePostsStore((state) => state.fetchPost)
+    const removePost = usePostsStore((state) => state.removePost)
 
     useEffect(() => {
-        if (!id) return
-        let active = true
-        getPost(id)
-            .then((data) => {
-                if (active) setPost(data)
-            })
-            .catch((err) => {
-                if (active) setError(err instanceof Error ? err.message : 'Failed to load post')
-            })
-            .finally(() => {
-                if (active) setLoading(false)
-            })
-        return () => {
-            active = false
-        }
-    }, [id])
+        if (id) void fetchPost(id)
+    }, [id, fetchPost])
 
     const handleDelete = async () => {
         if (!post || !window.confirm(`Delete "${post.title}"? This cannot be undone.`)) return
         try {
-            await deletePost(post._id)
+            await removePost(post._id)
             window.location.assign('/')
         } catch (err) {
             window.alert(err instanceof Error ? err.message : 'Failed to delete post')
@@ -57,7 +46,7 @@ export default function PostDetailPage() {
                         {post.title}
                     </h1>
                     <p className="mt-2 text-slate-500 dark:text-slate-400">
-                        by <span className="font-medium text-slate-600 dark:text-slate-300">{post.author}</span>
+                        <AuthorLink author={post.author} owner={post.owner ?? null} />
                     </p>
 
                     <div className="mt-6 flex flex-wrap items-center gap-4">
@@ -73,7 +62,7 @@ export default function PostDetailPage() {
                                 <path d="M15 3h6v6M10 14L21 3" />
                             </svg>
                         </a>
-                        <LikeButton postId={post._id} initialLikes={post.likes} />
+                        <LikeButton postId={post._id} />
                         {isAuthenticated && (
                             <button
                                 type="button"
@@ -84,6 +73,8 @@ export default function PostDetailPage() {
                             </button>
                         )}
                     </div>
+
+                    <CommentSection postId={post._id} />
                 </article>
             )}
         </div>

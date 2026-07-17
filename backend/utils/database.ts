@@ -6,20 +6,17 @@ import { ConsoleLogger } from '@/utils/logger'
 const config = new Config()
 const logger = new ConsoleLogger()
 
-const dbConfig: IDBConfig = {
-    uri: config.getMongoURI(),
-    options: {
-        maxPoolSize: 50,
-        minPoolSize: 5,
-        maxIdleTimeMS: 30000,
-        socketTimeoutMS: 45000,
-        serverSelectionTimeoutMS: 5000
-    }
+const connectionOptions: IDBConfig['options'] = {
+    maxPoolSize: 50,
+    minPoolSize: 5,
+    maxIdleTimeMS: 30000,
+    socketTimeoutMS: 45000,
+    serverSelectionTimeoutMS: 5000
 }
 
 export async function connectDatabase(): Promise<void> {
     try {
-        await mongoose.connect(dbConfig.uri, dbConfig.options)
+        await mongoose.connect(config.getMongoURI(), connectionOptions)
     } catch (error) {
         logger.error('Initial MongoDB connection error:', error)
         process.exit(1)

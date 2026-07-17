@@ -7,9 +7,10 @@ import { ConsoleLogger } from '@/utils/logger'
 
 const logger = new ConsoleLogger()
 
-export async function getAllPosts(): Promise<ServiceResult<Array<IPost>>> {
+export async function getAllPosts(owner?: string): Promise<ServiceResult<Array<IPost>>> {
     try {
-        const posts = await Post.find({})
+        const filter = owner ? { owner } : {}
+        const posts = await Post.find(filter)
         return success(posts)
     } catch (err) {
         return fail<Array<IPost>>(logger, err)
@@ -52,6 +53,42 @@ export async function increasePostLikesById(postId: Types.ObjectId | string, inc
         return success(true)
     } catch (err) {
         return fail<boolean>(logger, err)
+    }
+}
+
+export interface ILikeState {
+    likes: number
+    likedBy: string[]
+}
+
+export async function toggleLike(postId: Types.ObjectId | string, userId: string): Promise<ServiceResult<ILikeState>> {
+    try {
+        const post = await Post.findById(postId)
+        if (!post) return notFound<ILikeState>(`Post ${postId} not found`)
+
+        const likedBy: string[] = post.likedBy ?? []
+        const alreadyLiked = likedBy.includes(userId)
+        if (alreadyLiked) {
+            post.likedBy = likedBy.filter((id) => id !== userId)
+            post.likes = Math.max(0, (post.likes ?? 0) - 1)
+        } else {
+            post.likedBy = [...likedBy, userId]
+            post.likes = (post.likes ?? 0) + 1
+        }
+        await post.save()
+
+        return success({ likes: post.likes ?? 0, likedBy: post.likedBy })
+    } catch (err) {
+        return fail<ILikeState>(logger, err)
+    }
+}
+
+export async function countPostsByOwner(owner: string): Promise<ServiceResult<number>> {
+    try {
+        const count = await Post.countDocuments({ owner })
+        return success(count)
+    } catch (err) {
+        return fail<number>(logger, err)
     }
 }
 
