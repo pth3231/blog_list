@@ -60,4 +60,20 @@ export default class Config implements IConfig {
 
         return uri
     }
+
+    getJwtSecret(): string {
+        const secret = process.env['JWT_SECRET']
+        if (!secret || secret.trim() === '') {
+            this.logger.error('Cannot read the JWT_SECRET variable')
+            throw new Error('Cannot read the JWT_SECRET variable', {
+                cause: {
+                    variable: "process.env['JWT_SECRET']",
+                    value: process.env['JWT_SECRET'],
+                    reason: 'The .env file or env config is incorrect'
+                }
+            })
+        }
+
+        return secret
+    }
 }

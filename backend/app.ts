@@ -2,12 +2,14 @@ import express, { Request, Response, NextFunction } from 'express'
 import morgan from 'morgan'
 import postRouter from '@/routes/post.route'
 import healthRouter from '@/routes/health.route'
+import authRouter from '@/routes/auth.route'
 
 const app = express()
 
 app.use(morgan('dev'))
 app.use(express.json())
 app.use(healthRouter)
+app.use('/v1/auth', authRouter)
 app.use('/v1/posts', postRouter)
 
 app.get('/v1', (_, res) => {

@@ -3,6 +3,7 @@ import { IPost } from '@/types/post.type'
 import { ServiceResult } from '@/types/service_result.type'
 import { Types } from 'mongoose'
 import { Response, Router } from 'express'
+import { authenticateToken } from '@/middlewares/auth.middleware'
 
 const postRouter: Router = Router()
 
@@ -19,7 +20,7 @@ postRouter.get('/', async (_req, res) => {
     res.json(result.value)
 })
 
-postRouter.post('/', async (req, res) => {
+postRouter.post('/', authenticateToken, async (req, res) => {
     const post = req.body as IPost
     if (
         !post ||
@@ -39,9 +40,9 @@ postRouter.post('/', async (req, res) => {
 })
 
 postRouter.get('/:id', async (req, res) => {
-    const { id } = req.params
-    if (!Types.ObjectId.isValid(id)) {
-        invalidId(res, id)
+    const id = req.params['id']
+    if (typeof id !== 'string' || !Types.ObjectId.isValid(id)) {
+        invalidId(res, typeof id === 'string' ? id : '')
         return
     }
     const result = await getPostById(id)
@@ -71,10 +72,10 @@ postRouter.post('/increaseLike', async (req, res) => {
     res.status(200).end()
 })
 
-postRouter.delete('/:id', async (req, res) => {
-    const { id } = req.params
-    if (!Types.ObjectId.isValid(id)) {
-        invalidId(res, id)
+postRouter.delete('/:id', authenticateToken, async (req, res) => {
+    const id = req.params['id']
+    if (typeof id !== 'string' || !Types.ObjectId.isValid(id)) {
+        invalidId(res, typeof id === 'string' ? id : '')
         return
     }
     const result = await deletePostById(id)
