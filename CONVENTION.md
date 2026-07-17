@@ -10,6 +10,12 @@
 - All types setting must be named `file.type.ts`
 - Modules inside `models/`, `controllers/`, `routes/`, `middlewares/` should be named `file.functionality_in_singular.ts` (e.g. `post.model.ts`)
 
+## Frontend exception (React)
+The `snake_case` filename rule applies to the backend. The frontend follows idiomatic React naming instead:
+- React component files and their default export use `PascalCase` (e.g. `PostCard.tsx` exporting `PostCard`)
+- Stores, hooks, and plain library modules use `camelCase` (e.g. `authStore.ts`, `api.ts`, `types.ts`)
+- Everything else (interfaces prefixed `I...`, `camelCase` variables/functions, `PascalCase` types, no semicolons, single quotes, 4-space indent) stays identical to the backend
+
 # Rules and general conventions
 - All variables should be set to constants if possible
 - Parameters that must be stated, but not used, have to be clearly stated with `_` or `_<name>`
@@ -38,3 +44,21 @@ class Config implements IConfig {
 
 export default Config
 ```
+
+# Null and undefined handling
+- Always use `null` (never `undefined`) to represent an absent *value*, per the existing rule
+- Functions that may have no result must return `null`, never `undefined`
+- Optional *function parameters* may use the idiomatic `?` marker (e.g. `getPosts(owner?: string)`); this is the one accepted place `undefined` appears. Never write an explicit `undefined` value, cast (`x as T` returning `undefined`), or `: undefined` branch — use `null`
+- Narrow nullable values with an explicit guard before use; prefer an early-return guard over long optional-chaining chains when the absence is an error or needs a fallback:
+  - good: `if (user === null) return null` then use `user` safely afterwards
+  - avoid: `user?.profile?.name` deep chains that hide which part was missing
+- Distinguish "absent" (`null`) from "empty" (`''`, `[]`, `{}`); do not use an empty string/array to mean "missing"
+- At boundaries (API/route handlers/store actions), validate input types (`typeof`, `Array.isArray`, schema checks) and return or throw a clear error instead of letting `null`/`undefined` propagate into business logic
+
+# Readability conventions
+- Use guard clauses and early returns to reduce nesting; avoid deep `if/else` pyramids
+- Annotate explicit return types on exported functions and store actions so callers see the contract at a glance
+- Prefer a single options object over 3 or more positional parameters
+- Avoid `any`; use `unknown` and narrow it, or a precise type
+- Prefer `const`; only use `let` when reassignment is required, and keep its scope as tight as possible
+- Keep functions small and single-purpose; a function name starting with a verb should do exactly that one action

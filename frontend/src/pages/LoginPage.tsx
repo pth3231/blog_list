@@ -2,12 +2,13 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import Alert from '../components/Alert'
+import type { ReactElement } from 'react'
 
 interface ILocationState {
     from?: string
 }
 
-export default function LoginPage() {
+export default function LoginPage(): ReactElement {
     const login = useAuthStore((state) => state.login)
     const navigate = useNavigate()
     const location = useLocation()
@@ -18,7 +19,7 @@ export default function LoginPage() {
     const [error, setError] = useState<string | null>(null)
     const [submitting, setSubmitting] = useState(false)
 
-    const handleSubmit = async (event: FormEvent) => {
+    const handleSubmit = async (event: FormEvent): Promise<void> => {
         event.preventDefault()
         setError(null)
         if (!username.trim() || !password) return setError('Username and password are required.')

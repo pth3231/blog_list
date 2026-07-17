@@ -5,6 +5,7 @@ import { useCommentsStore } from '../store/commentsStore'
 import type { IComment } from '../lib/types'
 import Spinner from './Spinner'
 import Alert from './Alert'
+import type { ReactElement } from 'react'
 
 const EMPTY_COMMENTS: IComment[] = []
 
@@ -12,13 +13,13 @@ interface ICommentSectionProps {
     postId: string
 }
 
-function formatDate(value: string): string {
+function formatDate(value: string): string | null {
     const date = new Date(value)
-    if (Number.isNaN(date.getTime())) return ''
+    if (Number.isNaN(date.getTime())) return null
     return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-export default function CommentSection({ postId }: ICommentSectionProps) {
+export default function CommentSection({ postId }: ICommentSectionProps): ReactElement {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
     const comments = useCommentsStore((state) => state.byPostId[postId] ?? EMPTY_COMMENTS)
     const loading = useCommentsStore((state) => state.loading[postId] ?? false)
@@ -34,7 +35,7 @@ export default function CommentSection({ postId }: ICommentSectionProps) {
         void fetchComments(postId)
     }, [postId, fetchComments])
 
-    const handleSubmit = async (event: FormEvent) => {
+    const handleSubmit = async (event: FormEvent): Promise<void> => {
         event.preventDefault()
         setFormError(null)
         const trimmed = content.trim()
@@ -100,7 +101,7 @@ export default function CommentSection({ postId }: ICommentSectionProps) {
                         >
                             <div className="flex items-center justify-between gap-2">
                                 <span className="font-medium text-slate-700 dark:text-slate-200">{comment.author}</span>
-                                <span className="text-xs text-slate-400 dark:text-slate-500">{formatDate(comment.createdAt)}</span>
+                                <span className="text-xs text-slate-400 dark:text-slate-500">{formatDate(comment.createdAt) ?? ''}</span>
                             </div>
                             <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">{comment.content}</p>
                         </div>

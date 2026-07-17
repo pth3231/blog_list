@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, type ReactNode, type ReactElement } from 'react'
 
 type Theme = 'light' | 'dark'
 
@@ -16,7 +16,7 @@ function getInitialTheme(): Theme {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
+export function ThemeProvider({ children }: { children: ReactNode }): ReactElement {
     const [theme, setTheme] = useState<Theme>(getInitialTheme)
 
     useEffect(() => {
@@ -26,7 +26,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('theme', theme)
     }, [theme])
 
-    const toggleTheme = () => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))
+    const toggleTheme = (): void => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))
 
     return (
         <ThemeContext.Provider value={{ theme, toggleTheme }}>

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { usePostsStore } from '../store/postsStore'
 import Alert from '../components/Alert'
+import type { ReactElement } from 'react'
 
 function validateUrl(value: string): boolean {
     try {
@@ -13,7 +14,7 @@ function validateUrl(value: string): boolean {
     }
 }
 
-export default function CreatePostPage() {
+export default function CreatePostPage(): ReactElement {
     const user = useAuthStore((state) => state.user)
     const addPost = usePostsStore((state) => state.addPost)
     const navigate = useNavigate()
@@ -23,7 +24,7 @@ export default function CreatePostPage() {
     const [error, setError] = useState<string | null>(null)
     const [submitting, setSubmitting] = useState(false)
 
-    const handleSubmit = async (event: FormEvent) => {
+    const handleSubmit = async (event: FormEvent): Promise<void> => {
         event.preventDefault()
         setError(null)
 

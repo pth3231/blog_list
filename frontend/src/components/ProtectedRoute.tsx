@@ -3,7 +3,7 @@ import { useAuthStore } from '../store/authStore'
 import Spinner from './Spinner'
 import type { ReactNode } from 'react'
 
-export default function ProtectedRoute({ children }: { children: ReactNode }) {
+export default function ProtectedRoute({ children }: { children: ReactNode }): ReactNode {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
     const loading = useAuthStore((state) => state.loading)
     const location = useLocation()

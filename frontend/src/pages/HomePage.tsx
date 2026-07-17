@@ -5,8 +5,9 @@ import { usePostsStore } from '../store/postsStore'
 import PostCard from '../components/PostCard'
 import Spinner from '../components/Spinner'
 import Alert from '../components/Alert'
+import type { ReactElement } from 'react'
 
-export default function HomePage() {
+export default function HomePage(): ReactElement {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
     const allIds = usePostsStore((state) => state.allIds)
     const byId = usePostsStore((state) => state.byId)
@@ -18,7 +19,7 @@ export default function HomePage() {
         void fetchPosts()
     }, [fetchPosts])
 
-    const handleDeleted = (id: string) => {
+    const handleDeleted = (id: string): void => {
         void usePostsStore.getState().removePost(id)
     }
 
@@ -62,9 +63,12 @@ export default function HomePage() {
 
             {!loading && !error && allIds.length > 0 && (
                 <div className="grid gap-4 sm:grid-cols-2">
-                    {allIds.map((id) => (
-                        <PostCard key={id} post={byId[id]} onDeleted={handleDeleted} />
-                    ))}
+                    {allIds.map((id) => {
+                        const post = byId[id]
+                        return post ? (
+                            <PostCard key={id} post={post} onDeleted={handleDeleted} />
+                        ) : null
+                    })}
                 </div>
             )}
         </div>

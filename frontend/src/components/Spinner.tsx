@@ -1,4 +1,6 @@
-export default function Spinner({ label = 'Loading…' }: { label?: string }) {
+import type { ReactElement } from 'react'
+
+export default function Spinner({ label = 'Loading…' }: { label?: string }): ReactElement {
     return (
         <div className="flex flex-col items-center justify-center gap-3 py-16 text-slate-500 dark:text-slate-400">
             <svg className="h-8 w-8 animate-spin text-brand" viewBox="0 0 24 24" fill="none">

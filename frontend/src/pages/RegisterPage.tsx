@@ -2,8 +2,9 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import Alert from '../components/Alert'
+import type { ReactElement } from 'react'
 
-export default function RegisterPage() {
+export default function RegisterPage(): ReactElement {
     const register = useAuthStore((state) => state.register)
     const navigate = useNavigate()
 
@@ -13,7 +14,7 @@ export default function RegisterPage() {
     const [error, setError] = useState<string | null>(null)
     const [submitting, setSubmitting] = useState(false)
 
-    const handleSubmit = async (event: FormEvent) => {
+    const handleSubmit = async (event: FormEvent): Promise<void> => {
         event.preventDefault()
         setError(null)
 

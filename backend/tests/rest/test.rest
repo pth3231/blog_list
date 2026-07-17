@@ -14,10 +14,10 @@ Content-Type: application/json
 GET http://localhost:3000/v1/posts/6a4fd4a6a717503f88b333db
 ###
 
-POST http://localhost:3000/v1/posts/increaseLike
+POST http://localhost:3000/v1/posts/6a4fd4a6a717503f88b333db/like
 Content-Type: application/json
 
 {
-    "id": "6a4fd4a6a717503f88b333db",
-    "increment": 1
+    "userId": "6a4fd4a6a717503f88b333db"
 }
+###

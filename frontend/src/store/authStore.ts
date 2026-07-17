@@ -21,7 +21,7 @@ export const useAuthStore = create<IAuthState>()(
             token: null,
             isAuthenticated: false,
             loading: false,
-            init: async () => {
+            init: async (): Promise<void> => {
                 const token = get().token
                 if (!token) {
                     set({ loading: false })
@@ -38,17 +38,17 @@ export const useAuthStore = create<IAuthState>()(
                     set({ loading: false })
                 }
             },
-            login: async (username, password) => {
+            login: async (username: string, password: string): Promise<void> => {
                 const result = await apiLogin(username, password)
                 localStorage.setItem('token', result.token)
                 set({ token: result.token, user: result.user, isAuthenticated: true })
             },
-            register: async (username, password) => {
+            register: async (username: string, password: string): Promise<void> => {
                 const result = await apiRegister(username, password)
                 localStorage.setItem('token', result.token)
                 set({ token: result.token, user: result.user, isAuthenticated: true })
             },
-            logout: () => {
+            logout: (): void => {
                 localStorage.removeItem('token')
                 set({ token: null, user: null, isAuthenticated: false })
             }

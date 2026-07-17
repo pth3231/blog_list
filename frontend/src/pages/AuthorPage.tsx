@@ -5,8 +5,9 @@ import { getPostCount } from '../lib/api'
 import PostCard from '../components/PostCard'
 import Spinner from '../components/Spinner'
 import Alert from '../components/Alert'
+import type { ReactElement } from 'react'
 
-export default function AuthorPage() {
+export default function AuthorPage(): ReactElement {
     const { username } = useParams<{ username: string }>()
     const allIds = usePostsStore((state) => state.allIds)
     const byId = usePostsStore((state) => state.byId)
@@ -32,7 +33,7 @@ export default function AuthorPage() {
         }
     }, [username, fetchPosts])
 
-    const handleDeleted = (id: string) => {
+    const handleDeleted = (id: string): void => {
         void usePostsStore.getState().removePost(id)
     }
 
@@ -59,9 +60,12 @@ export default function AuthorPage() {
 
             {!loading && !error && allIds.length > 0 && (
                 <div className="grid gap-4 sm:grid-cols-2">
-                    {allIds.map((id) => (
-                        <PostCard key={id} post={byId[id]} onDeleted={handleDeleted} />
-                    ))}
+                    {allIds.map((id) => {
+                        const post = byId[id]
+                        return post ? (
+                            <PostCard key={id} post={post} onDeleted={handleDeleted} />
+                        ) : null
+                    })}
                 </div>
             )}
         </div>

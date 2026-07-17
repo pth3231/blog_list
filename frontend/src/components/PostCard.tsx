@@ -4,17 +4,18 @@ import { useAuthStore } from '../store/authStore'
 import { usePostsStore } from '../store/postsStore'
 import LikeButton from './LikeButton'
 import AuthorLink from './AuthorLink'
+import type { ReactElement } from 'react'
 
 interface IPostCardProps {
     post: IPost
     onDeleted: (id: string) => void
 }
 
-export default function PostCard({ post, onDeleted }: IPostCardProps) {
+export default function PostCard({ post, onDeleted }: IPostCardProps): ReactElement {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
     const removePost = usePostsStore((state) => state.removePost)
 
-    const handleDelete = async () => {
+    const handleDelete = async (): Promise<void> => {
         if (!window.confirm(`Delete "${post.title}"? This cannot be undone.`)) return
         try {
             await removePost(post._id)

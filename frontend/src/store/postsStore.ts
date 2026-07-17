@@ -29,7 +29,7 @@ export const usePostsStore = create<IPostsState>((set, get) => ({
     allIds: [],
     loading: false,
     error: null,
-    fetchPosts: async (owner) => {
+    fetchPosts: async (owner?: string): Promise<void> => {
         set({ loading: true, error: null })
         try {
             const posts = await getPosts(owner)
@@ -40,7 +40,7 @@ export const usePostsStore = create<IPostsState>((set, get) => ({
             set({ loading: false })
         }
     },
-    fetchPost: async (id) => {
+    fetchPost: async (id: string): Promise<void> => {
         set({ loading: true, error: null })
         try {
             const post = await getPost(id)
@@ -54,7 +54,7 @@ export const usePostsStore = create<IPostsState>((set, get) => ({
             set({ loading: false })
         }
     },
-    addPost: async (post) => {
+    addPost: async (post: INewPost): Promise<IPost> => {
         const created = await apiCreatePost(post)
         set((state) => ({
             byId: { ...state.byId, [created._id]: created },
@@ -62,7 +62,7 @@ export const usePostsStore = create<IPostsState>((set, get) => ({
         }))
         return created
     },
-    removePost: async (id) => {
+    removePost: async (id: string): Promise<void> => {
         await apiDeletePost(id)
         set((state) => {
             const byId = { ...state.byId }
@@ -70,7 +70,7 @@ export const usePostsStore = create<IPostsState>((set, get) => ({
             return { byId, allIds: state.allIds.filter((postId) => postId !== id) }
         })
     },
-    toggleLike: async (postId, userId) => {
+    toggleLike: async (postId: string, userId: string): Promise<void> => {
         const current = get().byId[postId]
         if (!current) return
         const alreadyLiked = current.likedBy?.includes(userId) ?? false
@@ -86,7 +86,7 @@ export const usePostsStore = create<IPostsState>((set, get) => ({
                     ...state.byId,
                     [postId]: {
                         ...post,
-                        likes: Math.max(0, (post.likes ?? 0) + (alreadyLiked ? -1 : 1)),
+                        likes: Math.max(0, post.likes + (alreadyLiked ? -1 : 1)),
                         likedBy
                     }
                 }
@@ -95,6 +95,7 @@ export const usePostsStore = create<IPostsState>((set, get) => ({
 
         try {
             const result = await apiToggleLike(postId, userId)
+            if (!result) return
             set((state) => {
                 const post = state.byId[postId]
                 if (!post) return state
@@ -112,7 +113,7 @@ export const usePostsStore = create<IPostsState>((set, get) => ({
                         ...state.byId,
                         [postId]: {
                             ...post,
-                            likes: Math.max(0, (post.likes ?? 0) + (alreadyLiked ? 1 : -1)),
+                            likes: Math.max(0, post.likes + (alreadyLiked ? 1 : -1)),
                             likedBy
                         }
                     }

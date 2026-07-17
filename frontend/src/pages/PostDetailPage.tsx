@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { usePostsStore } from '../store/postsStore'
 import LikeButton from '../components/LikeButton'
@@ -7,11 +7,13 @@ import Spinner from '../components/Spinner'
 import Alert from '../components/Alert'
 import AuthorLink from '../components/AuthorLink'
 import CommentSection from '../components/CommentSection'
+import type { ReactElement } from 'react'
 
-export default function PostDetailPage() {
+export default function PostDetailPage(): ReactElement {
     const { id } = useParams<{ id: string }>()
+    const navigate = useNavigate()
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-    const post = usePostsStore((state) => (id ? state.byId[id] : undefined))
+    const post = usePostsStore((state) => (id ? state.byId[id] : null))
     const loading = usePostsStore((state) => state.loading)
     const error = usePostsStore((state) => state.error)
     const fetchPost = usePostsStore((state) => state.fetchPost)
@@ -21,11 +23,11 @@ export default function PostDetailPage() {
         if (id) void fetchPost(id)
     }, [id, fetchPost])
 
-    const handleDelete = async () => {
+    const handleDelete = async (): Promise<void> => {
         if (!post || !window.confirm(`Delete "${post.title}"? This cannot be undone.`)) return
         try {
             await removePost(post._id)
-            window.location.assign('/')
+            navigate('/')
         } catch (err) {
             window.alert(err instanceof Error ? err.message : 'Failed to delete post')
         }

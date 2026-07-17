@@ -9,7 +9,7 @@ export interface IAuthedRequest extends Request {
 
 const config = new Config()
 
-export function authenticateToken(req: IAuthedRequest, res: Response, next: NextFunction) {
+export function authenticateToken(req: IAuthedRequest, res: Response, next: NextFunction): void {
     const header = req.headers['authorization']
     const token = typeof header === 'string' && header.startsWith('Bearer ') ? header.slice(7) : null
 

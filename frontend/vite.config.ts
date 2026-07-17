@@ -5,17 +5,17 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    react(),
-    babel({ presets: [reactCompilerPreset()] }),
-    tailwindcss()
-  ],
-  server: {
-    proxy: {
-      '/v1': {
-        target: 'http://localhost:3000',
-        changeOrigin: true
-      }
+    plugins: [
+        react(),
+        babel({ presets: [reactCompilerPreset()] }),
+        tailwindcss()
+    ],
+    server: {
+        proxy: {
+            '/v1': {
+                target: 'http://localhost:3000',
+                changeOrigin: true
+            }
+        }
     }
-  }
 })

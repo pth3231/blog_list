@@ -1,14 +1,15 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import ThemeToggle from './ThemeToggle'
+import type { ReactElement } from 'react'
 
-export default function Navbar() {
+export default function Navbar(): ReactElement {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
     const user = useAuthStore((state) => state.user)
     const logout = useAuthStore((state) => state.logout)
     const navigate = useNavigate()
 
-    const handleLogout = () => {
+    const handleLogout = (): void => {
         logout()
         navigate('/')
     }

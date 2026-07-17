@@ -8,7 +8,10 @@ import { useAuthStore } from './store/authStore.ts'
 
 useAuthStore.getState().init()
 
-createRoot(document.getElementById('root')!).render(
+const root = document.getElementById('root')
+if (root === null) throw new Error('Root element "#root" was not found')
+
+createRoot(root).render(
     <StrictMode>
         <ThemeProvider>
             <BrowserRouter>

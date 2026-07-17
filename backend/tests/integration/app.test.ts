@@ -129,65 +129,6 @@ describe('GET /v1/posts/:id', () => {
     })
 })
 
-describe('POST /v1/posts/increaseLike', () => {
-    it('should increment likes by 1 by default', async () => {
-        const created = await Post.create({
-            title: 'Likeable post',
-            author: 'Tester',
-            url: 'http://url.com/like'
-        })
-
-        await request(app).post('/v1/posts/increaseLike').send({ id: created._id }).expect(200)
-
-        const updated = await Post.findById(created._id)
-        expect(updated?.likes).toBe(1)
-    })
-
-    it('should increment likes by the given amount', async () => {
-        const created = await Post.create({
-            title: 'Likeable post 2',
-            author: 'Tester',
-            url: 'http://url.com/like2',
-            likes: 5
-        })
-
-        await request(app)
-            .post('/v1/posts/increaseLike')
-            .send({ id: created._id, increment: 3 })
-            .expect(200)
-
-        const updated = await Post.findById(created._id)
-        expect(updated?.likes).toBe(8)
-    })
-
-    it('should return 404 when the post does not exist', async () => {
-        const res = await request(app)
-            .post('/v1/posts/increaseLike')
-            .send({ id: nonExistentId, increment: 1 })
-            .expect(404)
-
-        expect(res.body).toHaveProperty('error')
-    })
-
-    it('should return 400 when the id format is invalid', async () => {
-        const res = await request(app)
-            .post('/v1/posts/increaseLike')
-            .send({ id: 'invalid-id', increment: 1 })
-            .expect(400)
-
-        expect(res.body).toHaveProperty('error')
-    })
-
-    it('should return 400 when the id is missing', async () => {
-        const res = await request(app)
-            .post('/v1/posts/increaseLike')
-            .send({ increment: 1 })
-            .expect(400)
-
-        expect(res.body).toHaveProperty('error')
-    })
-})
-
 describe('DELETE /v1/posts/:id', () => {
     it('should delete the post and return 204', async () => {
         const token = await getAuthToken()

@@ -1,13 +1,13 @@
 import Post from '@/models/post.model'
 import { IPost } from '@/types/post.type'
 import { ServiceResult } from '@/types/service_result.type'
-import { Document, Types } from 'mongoose'
+import { Types } from 'mongoose'
 import { fail, notFound, success } from '@/utils/service_result'
 import { ConsoleLogger } from '@/utils/logger'
 
 const logger = new ConsoleLogger()
 
-export async function getAllPosts(owner?: string): Promise<ServiceResult<Array<IPost>>> {
+export async function getAllPosts(owner: string | null): Promise<ServiceResult<Array<IPost>>> {
     try {
         const filter = owner ? { owner } : {}
         const posts = await Post.find(filter)
@@ -17,14 +17,14 @@ export async function getAllPosts(owner?: string): Promise<ServiceResult<Array<I
     }
 }
 
-export async function saveNewPost(postData: IPost): Promise<ServiceResult<Document>> {
+export async function saveNewPost(postData: IPost): Promise<ServiceResult<IPost>> {
     try {
         const newPost = new Post(postData)
         await newPost.save()
         return success(newPost)
     } catch (err) {
         const isValidation = err instanceof Error && err.name === 'ValidationError'
-        return fail<Document>(
+        return fail<IPost>(
             logger,
             err,
             isValidation ? 400 : 500,
@@ -40,19 +40,6 @@ export async function getPostById(id: Types.ObjectId | string): Promise<ServiceR
         return success(post)
     } catch (err) {
         return fail<IPost | null>(logger, err)
-    }
-}
-
-export async function increasePostLikesById(postId: Types.ObjectId | string, increment: number = 1): Promise<ServiceResult<boolean>> {
-    try {
-        const result = await Post.updateOne(
-            { _id: postId },
-            { $inc: { likes: increment } }
-        )
-        if (result.matchedCount === 0) return notFound<boolean>(`Post ${postId} not found`)
-        return success(true)
-    } catch (err) {
-        return fail<boolean>(logger, err)
     }
 }
 

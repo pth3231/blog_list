@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getPostCount } from '../lib/api'
+import type { ReactElement } from 'react'
 
 interface IAuthorLinkProps {
     author: string
     owner: string | null
 }
 
-export default function AuthorLink({ author, owner }: IAuthorLinkProps) {
+export default function AuthorLink({ author, owner }: IAuthorLinkProps): ReactElement {
     const [count, setCount] = useState<number | null>(null)
 
     useEffect(() => {

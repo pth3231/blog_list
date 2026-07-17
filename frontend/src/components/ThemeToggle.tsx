@@ -1,6 +1,7 @@
 import { useTheme } from '../context/ThemeContext'
+import type { ReactElement } from 'react'
 
-export default function ThemeToggle() {
+export default function ThemeToggle(): ReactElement {
     const { theme, toggleTheme } = useTheme()
     const isDark = theme === 'dark'
 

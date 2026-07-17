@@ -14,7 +14,7 @@ export const useCommentsStore = create<ICommentsState>((set) => ({
     byPostId: {},
     loading: {},
     error: {},
-    fetchComments: async (postId) => {
+    fetchComments: async (postId: string): Promise<void> => {
         set((state) => ({ loading: { ...state.loading, [postId]: true }, error: { ...state.error, [postId]: null } }))
         try {
             const comments = await apiGetComments(postId)
@@ -25,7 +25,7 @@ export const useCommentsStore = create<ICommentsState>((set) => ({
             set((state) => ({ loading: { ...state.loading, [postId]: false } }))
         }
     },
-    addComment: async (postId, content) => {
+    addComment: async (postId: string, content: string): Promise<void> => {
         const created = await apiAddComment(postId, content)
         set((state) => ({
             byPostId: { ...state.byPostId, [postId]: [...(state.byPostId[postId] ?? []), created] }

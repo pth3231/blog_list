@@ -7,6 +7,9 @@ export default defineConfig(
     js.configs.recommended,
     ...tseslint.configs.recommended,
     {
+        languageOptions: {
+            parserOptions: { projectService: true },
+        },
         rules: {
             semi: ['error', 'never'],
             quotes: ['error', 'single', { avoidEscape: true, allowTemplateLiterals: true }],
@@ -18,6 +21,12 @@ export default defineConfig(
             'no-trailing-spaces': 'error',
             'no-multi-spaces': ['error', { ignoreEOLComments: true }],
             'prefer-const': 'error',
+            '@typescript-eslint/no-explicit-any': 'error',
+            '@typescript-eslint/no-non-null-assertion': 'error',
+            '@typescript-eslint/no-unnecessary-condition': 'warn',
+            '@typescript-eslint/explicit-function-return-type': ['warn', { allowExpressions: true }],
+            'no-else-return': 'error',
+            'max-params': ['warn', 4],
             '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
             '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
             '@typescript-eslint/naming-convention': [
@@ -37,5 +46,6 @@ export default defineConfig(
                 }
             ]
         }
-    }
+    },
+    { ignores: ['eslint.config.mjs'] }
 )

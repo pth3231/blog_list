@@ -8,8 +8,9 @@ import CreatePostPage from './pages/CreatePostPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import NotFoundPage from './pages/NotFoundPage'
+import type { ReactElement } from 'react'
 
-export default function App() {
+export default function App(): ReactElement {
     return (
         <div className="min-h-screen">
             <Navbar />
