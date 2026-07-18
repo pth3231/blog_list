@@ -13,28 +13,37 @@ const testUser = {
     password: 'password123'
 }
 
+type Agent = ReturnType<typeof request.agent>
+let agent: Agent
+
 beforeAll(async () => {
     await connectDatabase()
+    agent = request.agent(app)
+    await request(app).post('/v1/auth/register').send(testUser).expect(201)
 })
 
 afterAll(async () => {
-    await User.deleteMany({ username: 'testuser' })
+    await User.deleteMany({ username: testUser.username })
     await mongoose.disconnect()
 })
 
 describe('POST /v1/auth/register', () => {
-    it('should register a user and return a token', async () => {
+    it('sets an httpOnly auth cookie and responds with the user only', async () => {
         const res = await request(app)
             .post('/v1/auth/register')
-            .send(testUser)
+            .send({ username: 'cookieuser', password: 'password123' })
             .expect(201)
 
-        expect(res.body).toHaveProperty('token')
-        expect(res.body.user).toMatchObject({ username: testUser.username })
+        expect(res.headers['set-cookie']).toBeDefined()
+        const cookie = String(res.headers['set-cookie'] ?? '')
+        expect(cookie).toContain('HttpOnly')
+        expect(res.body).toMatchObject({ user: { username: 'cookieuser' } })
+        expect(res.body).not.toHaveProperty('token')
         expect(res.body.user).not.toHaveProperty('passwordHash')
+        await User.deleteOne({ username: 'cookieuser' })
     })
 
-    it('should reject a short password', async () => {
+    it('rejects a short password', async () => {
         const res = await request(app)
             .post('/v1/auth/register')
             .send({ username: 'shorty', password: '123' })
@@ -43,7 +52,7 @@ describe('POST /v1/auth/register', () => {
         expect(res.body).toHaveProperty('error')
     })
 
-    it('should reject a duplicate username', async () => {
+    it('rejects a duplicate username', async () => {
         const res = await request(app)
             .post('/v1/auth/register')
             .send(testUser)
@@ -54,17 +63,18 @@ describe('POST /v1/auth/register', () => {
 })
 
 describe('POST /v1/auth/login', () => {
-    it('should login with correct credentials and return a token', async () => {
+    it('logs in with correct credentials and sets a cookie', async () => {
         const res = await request(app)
             .post('/v1/auth/login')
             .send(testUser)
             .expect(200)
 
-        expect(res.body).toHaveProperty('token')
-        expect(res.body.user).toMatchObject({ username: testUser.username })
+        expect(res.headers['set-cookie']).toBeDefined()
+        expect(res.body).toMatchObject({ user: { username: testUser.username } })
+        expect(res.body).not.toHaveProperty('token')
     })
 
-    it('should reject wrong password', async () => {
+    it('rejects wrong password', async () => {
         const res = await request(app)
             .post('/v1/auth/login')
             .send({ username: testUser.username, password: 'wrongpassword' })
@@ -73,7 +83,7 @@ describe('POST /v1/auth/login', () => {
         expect(res.body).toHaveProperty('error')
     })
 
-    it('should reject missing fields', async () => {
+    it('rejects missing fields', async () => {
         const res = await request(app)
             .post('/v1/auth/login')
             .send({ username: testUser.username })
@@ -84,29 +94,32 @@ describe('POST /v1/auth/login', () => {
 })
 
 describe('GET /v1/auth/me', () => {
-    it('should return the current user with a valid token', async () => {
-        const login = await request(app).post('/v1/auth/login').send(testUser)
-        const token = login.body.token
+    it('returns the current user when the cookie is present', async () => {
+        await agent.post('/v1/auth/login').send(testUser).expect(200)
 
-        const res = await request(app)
-            .get('/v1/auth/me')
-            .set('Authorization', `Bearer ${token}`)
-            .expect(200)
-
+        const res = await agent.get('/v1/auth/me').expect(200)
         expect(res.body).toMatchObject({ username: testUser.username })
     })
 
-    it('should reject a missing token', async () => {
+    it('rejects a request with no cookie', async () => {
         const res = await request(app).get('/v1/auth/me').expect(401)
         expect(res.body).toHaveProperty('error')
     })
 
-    it('should reject an invalid token', async () => {
+    it('rejects a request with a tampered cookie', async () => {
         const res = await request(app)
             .get('/v1/auth/me')
-            .set('Authorization', 'Bearer not-a-real-token')
+            .set('Cookie', 'blog_session=not-a-real-token')
             .expect(401)
 
         expect(res.body).toHaveProperty('error')
+    })
+})
+
+describe('POST /v1/auth/logout', () => {
+    it('clears the auth cookie', async () => {
+        const res = await agent.post('/v1/auth/logout').expect(204)
+        expect(res.headers['set-cookie']).toBeDefined()
+        await agent.get('/v1/auth/me').expect(401)
     })
 })

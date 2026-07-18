@@ -1,0 +1,47 @@
+# Production stack: the app (built from ./Dockerfile) + MongoDB, both with
+# auto-restart. Copy .env.prod.example -> .env.prod and fill in real secrets.
+#
+#   docker compose -f compose.prod.yaml up -d --build   # build & start
+#   docker compose -f compose.prod.yaml logs -f app     # tail app logs
+#   docker compose -f compose.prod.yaml ps              # health/status
+#   docker compose -f compose.prod.yaml down            # stop & remove
+#
+# Publish on a different host port: `PORT=8080 docker compose -f compose.prod.yaml up -d`
+#
+# Using MongoDB Atlas? Set MONGODB_URI in .env.prod to your Atlas URI and
+# delete the `mongo` service plus the app's `depends_on` block below.
+
+services:
+  app:
+    build: .
+    image: blog-list-app:latest
+    container_name: blog-list-app
+    init: true                      # tini as PID 1 -> correct SIGTERM forwarding + zombie reaping
+    restart: unless-stopped         # auto-restart on crash, and after host reboot
+    env_file:
+      - .env.prod
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      FRONTEND_DIST: /app/frontend-dist
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  mongo:
+    image: mongo:noble
+    container_name: blog-list-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  mongo-data:

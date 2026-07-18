@@ -1,37 +1,34 @@
 import User from '@/models/user.model'
 import { IAuthResult, IPublicUser } from '@/types/auth.type'
 import { ServiceResult } from '@/types/service_result.type'
-import { Types } from 'mongoose'
 import { fail, notFound, success } from '@/utils/service_result'
 import { ConsoleLogger } from '@/utils/logger'
 import Config from '@/utils/config'
+import { signToken } from '@/utils/auth'
 import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
+import mongoose from 'mongoose'
 
 const logger = new ConsoleLogger()
 const config = new Config()
-const SALT_ROUNDS = 10
-
-function signToken(id: string, username: string): string {
-    return jwt.sign({ sub: id, username }, config.getJwtSecret(), { expiresIn: '7d' })
-}
 
 function toPublicUser(id: string, username: string): IPublicUser {
     return { id, username }
 }
 
+function isDuplicateKey(err: unknown): boolean {
+    return err instanceof Error && /E11000|duplicate key/i.test(err.message)
+}
+
 export async function registerUser(username: string, password: string): Promise<ServiceResult<IAuthResult>> {
     try {
-        const existing = await User.findOne({ username })
-        if (existing) return fail<IAuthResult>(logger, null, 409, 'Username already taken')
-
-        const passwordHash = await bcrypt.hash(password, SALT_ROUNDS)
-        const user = new User({ username, passwordHash })
-        await user.save()
-
+        const passwordHash = await bcrypt.hash(password, config.getBcryptRounds())
+        const user = await User.create({ username, passwordHash })
         const token = signToken(user._id.toString(), user.username)
         return success({ token, user: toPublicUser(user._id.toString(), user.username) })
     } catch (err) {
+        if (isDuplicateKey(err)) {
+            return fail<IAuthResult>(logger, null, 409, 'Username already taken')
+        }
         return fail<IAuthResult>(logger, err)
     }
 }
@@ -53,7 +50,7 @@ export async function loginUser(username: string, password: string): Promise<Ser
 
 export async function getUserById(id: string): Promise<ServiceResult<IPublicUser>> {
     try {
-        if (!Types.ObjectId.isValid(id)) return notFound<IPublicUser>('User not found')
+        if (!mongoose.isValidObjectId(id)) return notFound<IPublicUser>('User not found')
 
         const user = await User.findById(id).select('-passwordHash')
         if (!user) return notFound<IPublicUser>('User not found')

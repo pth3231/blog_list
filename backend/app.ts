@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express'
+import helmet from 'helmet'
 import morgan from 'morgan'
 import path from 'node:path'
 import fs from 'node:fs'
@@ -6,11 +7,18 @@ import postRouter from '@/routes/post.route'
 import healthRouter from '@/routes/health.route'
 import authRouter from '@/routes/auth.route'
 import commentRouter from '@/routes/comment.route'
+import { ConsoleLogger } from '@/utils/logger'
 
 const app = express()
+const logger = new ConsoleLogger()
+const isProduction = process.env['NODE_ENV'] === 'production'
 
-app.use(morgan('dev'))
-app.use(express.json())
+app.use(helmet())
+// Behind a proxy/load-balancer in prod — required for accurate client IPs used
+// by express-rate-limit.
+app.set('trust proxy', 1)
+app.use(morgan(isProduction ? 'combined' : 'dev'))
+app.use(express.json({ limit: '100kb' }))
 app.use(healthRouter)
 app.use('/v1/auth', authRouter)
 app.use('/v1/posts', postRouter)
@@ -20,11 +28,13 @@ app.get('/v1', (_, res) => {
     res.send('This is api v1 entry')
 })
 
-// In production the backend also serves the built SPA, so the whole app runs on a
-// single origin (the frontend's API base is the relative `/v1`). In development the
-// Vite dev server serves the UI and proxies `/v1` to this API instead.
-if (process.env['NODE_ENV'] === 'production') {
-    const frontendDist = path.resolve(__dirname, '../../frontend/dist')
+// In production the backend also serves the built SPA, so the whole app runs
+// on a single origin (the frontend's API base is the relative `/v1`). In
+// development the Vite dev server serves the UI and proxies `/v1` here.
+if (isProduction) {
+    const frontendDist = process.env['FRONTEND_DIST']
+        ? path.resolve(process.env['FRONTEND_DIST'])
+        : path.resolve(__dirname, '../../frontend/dist')
     if (fs.existsSync(frontendDist)) {
         app.use(express.static(frontendDist))
         app.use((req, res, next) => {
@@ -40,9 +50,12 @@ app.use((_req: Request, res: Response) => {
     res.status(404).json({ error: 'Not found' })
 })
 
-app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-    const message = err instanceof Error ? err.message : 'Internal server error'
-    res.status(500).json({ error: message })
+app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
+    // Express throws a PayloadTooLargeError (413) when the JSON body exceeds the
+    // limit configured above — preserve that status instead of masking as 500.
+    const status = err instanceof Error && err.name === 'PayloadTooLargeError' ? 413 : 500
+    logger.error('Unhandled error on', req.method, req.path, err)
+    res.status(status).json({ error: status === 413 ? 'Request body too large' : 'Internal server error' })
 })
 
 export default app

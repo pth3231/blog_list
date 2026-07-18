@@ -1,9 +1,9 @@
 {
   "name": "blog_list",
   "version": "1.0.0",
-  "description": "",
+  "description": "Blog list — Express + TypeScript REST API (MongoDB)",
   "type": "commonjs",
-  "main": "index.js",
+  "main": "dist/server.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx watch server.ts",
     "test": "cross-env NODE_ENV=test vitest run",
@@ -44,6 +44,8 @@
     "bcryptjs": "^2.4.3",
     "cross-env": "^10.1.0",
     "express": "^5.2.1",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^9.7.3",
     "morgan": "^1.11.0"

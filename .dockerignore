@@ -1,0 +1,25 @@
+# Version control & local tooling
+.git
+.github
+.claude
+.mcp.json
+
+# Dependencies & build output (rebuilt cleanly inside each build stage)
+**/node_modules
+**/dist
+**/build
+
+# Secrets — never bake into the image
+**/.env
+**/.env.*
+
+# Docs / build files not needed at runtime
+*.md
+Dockerfile
+.dockerignore
+compose*.yaml
+
+# Dev-only source
+backend/tests
+backend/requests
+backend/compose.yaml

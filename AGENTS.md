@@ -1,49 +1,72 @@
 # AGENTS.md
 
-Two independent packages live side by side; there is **no root orchestration**. Run all commands from inside the relevant subdir. The root `package.json` only carries the `shadcn` CLI devDep.
+Two independent packages live side by side; there is **no root orchestration**
+and **no root `package.json`**. Run all commands from inside the relevant subdir.
 
-- `backend/` — Express + TypeScript (CommonJS) REST API, MongoDB via Mongoose.
-- `frontend/` — React 19 + Vite + Tailwind v4 + Zustand + React Router 7, React Compiler enabled.
+- `backend/` — Express 5 + TypeScript (CommonJS) REST API, MongoDB via Mongoose.
+- `frontend/` — React 19 + Vite + Tailwind v4 + Zustand + React Router 7 (React Compiler enabled).
+
+`CLAUDE.md` is the canonical, detailed guide (architecture, conventions, commands).
+`CONVENTION.md` holds the prose style rationale. This file is the short orientation.
 
 ## Commands
 
 Backend (run in `backend/`):
 - `npm run dev` — tsx watch on `server.ts` (NODE_ENV=development).
 - `npm test` — `vitest run` with NODE_ENV=test. **Requires a live MongoDB** (see below).
-- `npm run build` — `tsc` + `tsc-alias`, emits to `dist/` (inside `backend/`).
+- `npm run build` — `tsc` + `tsc-alias`, emits to `dist/`.
 - `npm run lint` / `npm run lint:fix`.
-- `npm start` — runs the compiled build (`NODE_ENV=production node dist/server.js`). In production the API also serves the built `frontend/dist` SPA on the same origin.
+- `npm start` — runs the compiled build. In production the API also serves the
+  built `frontend/dist` SPA on the same origin.
 
 Frontend (run in `frontend/`):
 - `npm run dev` (vite), `npm run build` (`tsc -b && vite build`), `npm run lint`, `npm run preview`.
 
 ## Backend test / run prerequisites
 
-- Integration tests (`backend/tests/integration/*`) connect to a **real MongoDB**; there is no mock. They need `TEST_MONGODB_URI`, else fall back to `mongodb://localhost:27017/blog_list_test`. Each suite writes to a unique DB via `uniqueDbUri()` (`backend/tests/integration/testDb.ts`).
-- Start the test DB with `docker compose -f backend/compose.yaml up -d` (container `blog-list-mongo-test`, port 27017).
-- Dev/start need a `.env` (gitignored) with `PORT`, `MONGODB_URI`, `JWT_SECRET`. Copy from `backend/.env.example`. `NODE_ENV=test` switches config to `TEST_MONGODB_URI` (`backend/utils/config.ts`).
-- `vitest.config.ts` hardcodes `JWT_SECRET` for tests, so tests do not need `.env`.
+- Integration tests connect to a **real MongoDB**; there is no mock. Each suite
+  writes to a unique DB via `uniqueDbUri()` (`backend/tests/integration/testDb.ts`).
+- Start the test DB with `docker compose -f backend/compose.yaml up -d`
+  (container `blog-list-mongo-test`, port 27017). GitHub Actions starts one
+  automatically (`.github/workflows/ci.yml`).
+- Dev/start need a `.env` (gitignored) copied from `backend/.env.example`
+  (`PORT`, `MONGODB_URI`, `JWT_SECRET`, …). For local dev set **`PORT=3000`** —
+  the Vite proxy targets `:3000`. A missing `.env` in CI/containers is fine;
+  `utils/config.ts` reads from the real environment in that case.
+- Tests need no `.env`: `vitest.config.ts` hardcodes `JWT_SECRET`.
 
-## Architecture quirks
+## Architecture notes that bite if ignored
 
-- Backend uses the `@/` path alias → backend root (set in `backend/tsconfig.json` `paths` and `vitest.config.ts` `alias`). `tsc-alias` rewrites these in the build output, so keep the alias — do not "simplify" to relative imports expecting the build to resolve them.
-- `backend/tsconfig.json` is stricter than TS defaults: `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noPropertyAccessFromIndexSignature`. Undefined-vs-null and index-access patterns that compile elsewhere will fail here.
-- Layer layout is fixed by convention: `models/`, `controllers/`, `routes/`, `middlewares/`, `utils/`, `types/`, `tests/`. Route → controller → model flow.
-- `opencode.json` configures a `shadcn` MCP server (`npx shadcn@latest mcp`) and `OpenWebSearch`; use the shadcn skill/MCP for component work rather than hand-writing UI primitives.
+- The `@/` path alias is standardized in **both** packages and **enforced**:
+  backend `@/` → backend root (`tsconfig.json` `paths` + `vitest.config.ts`,
+  rewritten by `tsc-alias`); frontend `@/` → `src/` (`tsconfig.app.json` `paths`
+  + `vite.config.ts` `resolve.alias`). The ESLint rule `alias/no-cross-dir-relative`
+  (inline in both ESLint configs, no extra dep) forbids `../…` imports — use `@/…`
+  for anything outside the current directory. Same-dir `./sibling` is allowed.
+- `backend/tsconfig.json` is stricter than TS defaults
+  (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`,
+  `noPropertyAccessFromIndexSignature`). Patterns that compile elsewhere fail here.
+- **Auth is cookie-based, not bearer tokens.** Login/register set an `httpOnly`
+  cookie (`utils/auth.ts`); `authenticateToken` reads it. The token is never
+  exposed to JS or returned in a response body. Frontend `fetch` uses
+  `credentials: 'include'`.
+- Layered flow is fixed by convention: `models/`, `controllers/`, `routes/`,
+  `middlewares/`, `utils/`, `types/`, `tests/`. Route → controller → model.
+  Controllers return `ServiceResult<T>`; routes translate it via `sendResult`.
+- `GET /posts` is **paginated** (`limit`/`skip`, capped) and returns view objects
+  (`likes` + `likedByMe`), never the internal `likedBy` user-id list.
+- `DELETE /posts/:id` checks ownership (403 for non-owners).
 
 ## Style / lint guardrails (enforced, not optional)
 
-ESLint and `CONVENTION.md` enforce these; full rules are in `CONVENTION.md`:
-- **No semicolons**, single quotes, 4-space indent, no trailing/dangling commas or blank lines (enforced in both `backend/eslint.config.mjs` and `frontend/eslint.config.js`).
-- Backend uses `snake_case` filenames (e.g. `post.model.ts`). The **frontend** uses idiomatic React naming: `PascalCase` for component files (`PostCard.tsx`), `camelCase` for stores/hooks/lib (`authStore.ts`, `api.ts`). See `CONVENTION.md`.
-- Interfaces prefixed `I...` (e.g. `IConfig`); PascalCase classes/types; camelCase functions (verb-led).
-- `null`, never an explicit `undefined` value, for absent values; optional `?` params are the one accepted `undefined`. Avoid deep optional-chaining on possibly-null.
-- No `any` (use `unknown` + narrow); prefer `const`; guard clauses over `if/else` pyramids; explicit return types on exported fns/store actions.
-- `no-explicit-any`, `no-non-null-assertion`, and `max-params` (4) are errors/warnings.
+ESLint and `CONVENTION.md` enforce these — full rules are in `CONVENTION.md` and
+the two ESLint configs. Highlights: no semicolons, single quotes, 4-space indent,
+no trailing commas; backend `snake_case` filenames, frontend idiomatic React
+naming; interfaces prefixed `I…`; `null` (never explicit `undefined`) for absent
+values; no `any`; guard clauses over `if/else` pyramids; explicit return types.
 
-When in doubt about style, trust `CONVENTION.md` and the ESLint configs (`backend/eslint.config.mjs`, `frontend/eslint.config.js`).
-
-## Multi-Agent Routing Rules
-- Always invoke the `@explore` agent first to map file trees before modifying any layout files.
-- Route all open-web documentation lookups and third-party API searches through the `@scout` agent.
-- If a task involves changes across more than 3 source code modules, dispatch the `@general` worker agent to orchestrate the refactor sub-tasks.
+Formatting is enforced with ESLint's core rules (no Prettier) — this is
+intentional; do not introduce a formatter without team sign-off.
+**Non-deprecated usage is enforced** by `@typescript-eslint/no-deprecated`
+(error) in both ESLint configs — never use a `@deprecated` API/option; migrate
+to the replacement.

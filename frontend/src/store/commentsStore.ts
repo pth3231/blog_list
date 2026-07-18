@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import { addComment as apiAddComment, getComments as apiGetComments } from '../lib/api'
-import type { IComment } from '../lib/types'
+import { addComment as apiAddComment, getComments as apiGetComments } from '@/lib/api'
+import type { IComment } from '@/lib/types'
 
 interface ICommentsState {
     byPostId: Record<string, IComment[]>

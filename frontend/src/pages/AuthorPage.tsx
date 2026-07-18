@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { usePostsStore } from '../store/postsStore'
-import { getPostCount } from '../lib/api'
-import PostCard from '../components/PostCard'
-import Spinner from '../components/Spinner'
-import Alert from '../components/Alert'
+import { usePostsStore } from '@/store/postsStore'
+import { getPostCount } from '@/lib/api'
+import PostCard from '@/components/PostCard'
+import Spinner from '@/components/Spinner'
+import Alert from '@/components/Alert'
 import type { ReactElement } from 'react'
 
 export default function AuthorPage(): ReactElement {
@@ -13,7 +13,10 @@ export default function AuthorPage(): ReactElement {
     const byId = usePostsStore((state) => state.byId)
     const loading = usePostsStore((state) => state.loading)
     const error = usePostsStore((state) => state.error)
+    const hasMore = usePostsStore((state) => state.hasMore)
+    const loadingMore = usePostsStore((state) => state.loadingMore)
     const fetchPosts = usePostsStore((state) => state.fetchPosts)
+    const fetchMore = usePostsStore((state) => state.fetchMore)
 
     const [count, setCount] = useState<number | null>(null)
 
@@ -66,6 +69,19 @@ export default function AuthorPage(): ReactElement {
                             <PostCard key={id} post={post} onDeleted={handleDeleted} />
                         ) : null
                     })}
+                </div>
+            )}
+
+            {!loading && !error && hasMore && (
+                <div className="mt-8 flex justify-center">
+                    <button
+                        type="button"
+                        onClick={() => void fetchMore()}
+                        disabled={loadingMore}
+                        className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-600 transition hover:border-brand hover:text-brand-dark disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:border-brand"
+                    >
+                        {loadingMore ? 'Loading…' : 'Load more'}
+                    </button>
                 </div>
             )}
         </div>

@@ -1,11 +1,10 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type SubmitEventHandler, type ReactElement } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuthStore } from '../store/authStore'
-import { useCommentsStore } from '../store/commentsStore'
-import type { IComment } from '../lib/types'
+import { useAuthStore } from '@/store/authStore'
+import { useCommentsStore } from '@/store/commentsStore'
+import type { IComment } from '@/lib/types'
 import Spinner from './Spinner'
 import Alert from './Alert'
-import type { ReactElement } from 'react'
 
 const EMPTY_COMMENTS: IComment[] = []
 
@@ -35,7 +34,7 @@ export default function CommentSection({ postId }: ICommentSectionProps): ReactE
         void fetchComments(postId)
     }, [postId, fetchComments])
 
-    const handleSubmit = async (event: FormEvent): Promise<void> => {
+    const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
         event.preventDefault()
         setFormError(null)
         const trimmed = content.trim()

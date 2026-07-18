@@ -1,8 +1,8 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type SubmitEventHandler } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useAuthStore } from '../store/authStore'
-import { usePostsStore } from '../store/postsStore'
-import Alert from '../components/Alert'
+import { useAuthStore } from '@/store/authStore'
+import { usePostsStore } from '@/store/postsStore'
+import Alert from '@/components/Alert'
 import type { ReactElement } from 'react'
 
 function validateUrl(value: string): boolean {
@@ -24,7 +24,7 @@ export default function CreatePostPage(): ReactElement {
     const [error, setError] = useState<string | null>(null)
     const [submitting, setSubmitting] = useState(false)
 
-    const handleSubmit = async (event: FormEvent): Promise<void> => {
+    const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
         event.preventDefault()
         setError(null)
 

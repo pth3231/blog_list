@@ -1,4 +1,4 @@
-import { useTheme } from '../context/ThemeContext'
+import { useTheme } from '@/context/ThemeContext'
 import type { ReactElement } from 'react'
 
 export default function ThemeToggle(): ReactElement {

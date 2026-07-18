@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getPostCount } from '../lib/api'
+import { getPostCount } from '@/lib/api'
 import type { ReactElement } from 'react'
 
 interface IAuthorLinkProps {

@@ -1,52 +1,66 @@
 import { Router } from 'express'
-import { registerUser, loginUser, getUserById } from '@/controllers/auth.controller'
-import { IAuthedRequest, authenticateToken } from '@/middlewares/auth.middleware'
+import rateLimit from 'express-rate-limit'
+import { loginUser, registerUser, getUserById } from '@/controllers/auth.controller'
+import { authenticateToken, IAuthedRequest } from '@/middlewares/auth.middleware'
+import { clearAuthCookie, setAuthCookie } from '@/utils/auth'
+import { parseCredentials } from '@/utils/validate'
+import { sendError } from '@/utils/http_response'
 
 const authRouter: Router = Router()
 
-authRouter.post('/register', async (req, res) => {
-    const { username, password } = req.body as { username?: unknown, password?: unknown }
-    if (
-        typeof username !== 'string' || !username.trim() ||
-        typeof password !== 'string' || password.length < 6
-    ) {
-        res.status(400).json({ error: 'Username and password (min 6 characters) are required' })
-        return
-    }
-
-    const result = await registerUser(username.trim(), password)
-    if (!result.ok) {
-        res.status(result.status).json({ error: result.message })
-        return
-    }
-    res.status(201).json(result.value)
+// Hard limit the credential endpoints to blunt brute-force / signup abuse.
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many auth attempts, please try again later.' }
 })
 
-authRouter.post('/login', async (req, res) => {
-    const { username, password } = req.body as { username?: unknown, password?: unknown }
-    if (typeof username !== 'string' || !username.trim() || typeof password !== 'string' || !password) {
-        res.status(400).json({ error: 'Username and password are required' })
+authRouter.post('/register', authLimiter, async (req, res) => {
+    const credentials = parseCredentials(req.body)
+    if (credentials === null) {
+        sendError(res, 400, 'Username (min 3 chars) and password (min 6 chars) are required')
         return
     }
-
-    const result = await loginUser(username.trim(), password)
+    const result = await registerUser(credentials.username, credentials.password)
     if (!result.ok) {
-        res.status(result.status).json({ error: result.message })
+        sendError(res, result.status, result.message)
         return
     }
-    res.json(result.value)
+    setAuthCookie(res, result.value.token)
+    res.status(201).json({ user: result.value.user })
+})
+
+authRouter.post('/login', authLimiter, async (req, res) => {
+    const credentials = parseCredentials(req.body)
+    if (credentials === null) {
+        sendError(res, 400, 'Username and password are required')
+        return
+    }
+    const result = await loginUser(credentials.username, credentials.password)
+    if (!result.ok) {
+        sendError(res, result.status, result.message)
+        return
+    }
+    setAuthCookie(res, result.value.token)
+    res.status(200).json({ user: result.value.user })
+})
+
+authRouter.post('/logout', (_req, res) => {
+    clearAuthCookie(res)
+    res.status(204).end()
 })
 
 authRouter.get('/me', authenticateToken, async (req: IAuthedRequest, res) => {
     const userId = req.user?.sub
-    if (!userId) {
-        res.status(401).json({ error: 'Unauthorized' })
+    if (userId === undefined) {
+        sendError(res, 401, 'Unauthorized')
         return
     }
-
     const result = await getUserById(userId)
     if (!result.ok) {
-        res.status(result.status).json({ error: result.message })
+        sendError(res, result.status, result.message)
         return
     }
     res.json(result.value)
