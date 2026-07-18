@@ -5,6 +5,33 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
+// Enforce the `@/` path alias: any import that traverses out of the current
+// directory (`../…`) must use the alias instead. Same-directory `./sibling`
+// imports are allowed. (No new dependency — an inline rule.)
+const noCrossDirRelative = {
+    meta: {
+        type: 'problem',
+        docs: { description: 'Require the @/ alias for cross-directory imports' }
+    },
+    create(context) {
+        function check(node) {
+            const source = node && node.source
+            const value = source && source.value
+            if (typeof value === 'string' && value.startsWith('../')) {
+                context.report({
+                    node,
+                    message: "Use the '@/...' alias for cross-directory imports instead of '../...'."
+                })
+            }
+        }
+        return {
+            ImportDeclaration: check,
+            ExportNamedDeclaration: check,
+            ExportAllDeclaration: check
+        }
+    }
+}
+
 export default defineConfig([
     globalIgnores(['dist']),
     {
@@ -19,7 +46,11 @@ export default defineConfig([
             globals: globals.browser,
             parserOptions: { projectService: true },
         },
+        plugins: {
+            alias: { rules: { 'no-cross-dir-relative': noCrossDirRelative } }
+        },
         rules: {
+            'alias/no-cross-dir-relative': 'error',
             semi: ['error', 'never'],
             quotes: ['error', 'single', { avoidEscape: true, allowTemplateLiterals: true }],
             indent: ['error', 4, { SwitchCase: 1, VariableDeclarator: 1 }],
@@ -32,6 +63,7 @@ export default defineConfig([
             'prefer-const': 'error',
             '@typescript-eslint/no-explicit-any': 'error',
             '@typescript-eslint/no-non-null-assertion': 'error',
+            '@typescript-eslint/no-deprecated': 'error',
             '@typescript-eslint/no-unnecessary-condition': 'warn',
             '@typescript-eslint/explicit-function-return-type': ['warn', { allowExpressions: true }],
             'no-else-return': 'error',

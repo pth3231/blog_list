@@ -35,9 +35,16 @@ mongoose.connection.on('disconnected', () => {
     logger.warn('Mongoose connection pool disconnected.')
 })
 
-// Gracefully handle app termination to close all sockets in the pool
-process.on('SIGINT', async () => {
+// Gracefully close the connection pool on termination signals. SIGINT covers
+// Ctrl-C / `npm stop`; SIGTERM is what container orchestrators (Docker, Swarm,
+// Kubernetes) send on `docker stop`, rolling updates, and evictions — handling
+// it avoids dropped in-flight requests during deploys.
+async function shutdown(signal: string): Promise<void> {
+    logger.log(`${signal} received, closing mongoose connection pool.`)
     await mongoose.connection.close()
-    logger.log('Mongoose connection pool closed due to app termination.')
+    logger.log('Mongoose connection pool closed.')
     process.exit(0)
-})
+}
+
+process.on('SIGINT', () => void shutdown('SIGINT'))
+process.on('SIGTERM', () => void shutdown('SIGTERM'))

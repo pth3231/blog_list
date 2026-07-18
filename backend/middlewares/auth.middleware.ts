@@ -1,36 +1,37 @@
 import { Request, Response, NextFunction } from 'express'
-import jwt from 'jsonwebtoken'
-import Config from '@/utils/config'
 import { IAuthTokenPayload } from '@/types/auth.type'
+import { readAuthToken, verifyToken } from '@/utils/auth'
 
 export interface IAuthedRequest extends Request {
     user?: IAuthTokenPayload
 }
 
-const config = new Config()
-
 export function authenticateToken(req: IAuthedRequest, res: Response, next: NextFunction): void {
-    const header = req.headers['authorization']
-    const token = typeof header === 'string' && header.startsWith('Bearer ') ? header.slice(7) : null
-
+    const token = readAuthToken(req)
     if (!token) {
         res.status(401).json({ error: 'Missing authentication token' })
         return
     }
 
     try {
-        const decoded = jwt.verify(token, config.getJwtSecret())
-        if (typeof decoded === 'string' || !decoded.sub || typeof decoded.sub !== 'string') {
-            res.status(401).json({ error: 'Invalid token payload' })
-            return
-        }
-
-        req.user = {
-            sub: decoded.sub,
-            username: typeof decoded['username'] === 'string' ? decoded['username'] : ''
-        }
+        req.user = verifyToken(token)
         next()
     } catch {
         res.status(401).json({ error: 'Invalid or expired token' })
     }
+}
+
+// Resolves the authenticated user id when a valid cookie is present, or `null`
+// for anonymous requests. Never rejects — use on routes that are public but
+// want to personalize the response (e.g. `likedByMe`).
+export function optionalAuth(req: IAuthedRequest, _res: Response, next: NextFunction): void {
+    const token = readAuthToken(req)
+    if (token !== null) {
+        try {
+            req.user = verifyToken(token)
+        } catch {
+            // Ignore malformed tokens on optional auth — treat as anonymous.
+        }
+    }
+    next()
 }

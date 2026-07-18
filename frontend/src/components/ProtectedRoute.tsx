@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom'
-import { useAuthStore } from '../store/authStore'
+import { useAuthStore } from '@/store/authStore'
 import Spinner from './Spinner'
 import type { ReactNode } from 'react'
 

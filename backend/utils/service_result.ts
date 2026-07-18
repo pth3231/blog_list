@@ -13,3 +13,11 @@ export function success<T>(value: T): ServiceResult<T> {
 export function notFound<T>(message = 'Resource not found'): ServiceResult<T> {
     return { ok: false, status: 404, message }
 }
+
+export function forbidden<T>(message = 'Forbidden'): ServiceResult<T> {
+    return { ok: false, status: 403, message }
+}
+
+export function badRequest<T>(message = 'Bad request'): ServiceResult<T> {
+    return { ok: false, status: 400, message }
+}

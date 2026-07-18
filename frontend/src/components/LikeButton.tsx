@@ -1,9 +1,7 @@
-import { usePostsStore } from '../store/postsStore'
-import { useAuthStore } from '../store/authStore'
+import { usePostsStore } from '@/store/postsStore'
+import { useAuthStore } from '@/store/authStore'
 import { Link } from 'react-router-dom'
 import type { ReactElement } from 'react'
-
-const EMPTY_LIKED_BY: string[] = []
 
 interface ILikeButtonProps {
     postId: string
@@ -11,16 +9,14 @@ interface ILikeButtonProps {
 
 export default function LikeButton({ postId }: ILikeButtonProps): ReactElement {
     const likes = usePostsStore((state) => state.byId[postId]?.likes ?? 0)
-    const likedBy = usePostsStore((state) => state.byId[postId]?.likedBy ?? EMPTY_LIKED_BY)
+    const likedByMe = usePostsStore((state) => state.byId[postId]?.likedByMe ?? null)
     const toggleLike = usePostsStore((state) => state.toggleLike)
-    const userId = useAuthStore((state) => state.user?.id ?? null)
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
 
-    const liked = userId !== null && likedBy.includes(userId)
+    const liked = likedByMe === true
 
     const handleClick = (): void => {
-        if (!isAuthenticated || !userId) return
-        void toggleLike(postId, userId)
+        void toggleLike(postId)
     }
 
     if (!isAuthenticated) {

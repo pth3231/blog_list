@@ -4,8 +4,9 @@ export interface IPost {
     author: string
     url: string
     likes: number
-    likedBy?: string[]
-    owner?: string | null
+    likedByMe: boolean | null
+    owner: string | null
+    createdAt: string
 }
 
 export interface IComment {
@@ -21,9 +22,15 @@ export interface IPublicUser {
     username: string
 }
 
+// The token lives in an httpOnly cookie set by the server, so the client only
+// ever sees the user object — never the token itself.
 export interface IAuthResult {
-    token: string
     user: IPublicUser
+}
+
+export interface ILikeState {
+    likes: number
+    likedByMe: boolean
 }
 
 export interface INewPost {

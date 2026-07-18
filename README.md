@@ -38,15 +38,16 @@ The `@/` path alias resolves to the backend root (configured in `tsconfig.json` 
 | `GET` | `/posts/count?owner=` | | Count posts by owner |
 | `GET` | `/posts/:id` | | Get one post |
 | `DELETE` | `/posts/:id` | ✅ | Delete a post (204) |
-| `POST` | `/posts/:id/like` | ✅ | Toggle like |
+| `POST` | `/posts/:id/like` | ✅ | Toggle like → `{ likes, likedByMe }` |
 | `GET`/`POST` | `/posts/:id/comments` | POST ✅ | List / add comments |
-| `POST` | `/auth/register`, `/auth/login` | | Auth, returns JWT |
+| `POST` | `/auth/register`, `/auth/login` | | Auth → sets httpOnly cookie, returns `{ user }` |
+| `POST` | `/auth/logout` | | Clears the auth cookie |
 | `GET` | `/auth/me` | ✅ | Current user |
 | `GET` | `/health`, `/health/live`, `/health/ready` | | Probes |
 
 ### Frontend (`frontend/`)
 
-A React 19 SPA (ESM, built by Vite, React Compiler enabled). It talks to the backend through a thin `lib/api.ts` wrapper over `fetch`, and holds server state in Zustand stores (`authStore`, `postsStore`, `commentsStore`) keyed by id for normalized lookups.
+A React 19 SPA (ESM, built by Vite, React Compiler enabled). It talks to the backend through a single `lib/api.ts` `fetch` wrapper that sends `credentials: 'include'` (auth rides the **httpOnly cookie** — no token in JS), and holds server state in Zustand stores (`postsStore` is normalized + paginated, `commentsStore` is keyed per-post, `authStore` caches the user).
 
 - **`pages/`** — route components (one per route).
 - **`components/`** — presentational React components (PascalCase).
