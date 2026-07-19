@@ -66,7 +66,11 @@ Two things that look optional but are load-bearing:
 
 ### Production single-origin serving
 
-In `NODE_ENV=production`, `app.ts` statically serves `frontend/dist` and falls through to its `index.html` for non-API GETs, so the whole app runs on one origin. That is why the frontend's API base is the relative `/v1` (`lib/api.ts`) — it relies on same-origin in prod and on the Vite proxy in dev.
+In `NODE_ENV=production`, `app.ts` statically serves `frontend/dist` and falls through to its `index.html` for non-API GETs, so the whole app runs on one origin. That is why the frontend's API base is the relative `/v1` (`lib/api.ts`) — it relies on same-origin in prod and on the Vite proxy in dev. The served path is overridable via `FRONTEND_DIST` (used by the Docker image; defaults to `../../frontend/dist` relative to `dist/`).
+
+### Production via Docker
+
+The root `Dockerfile` is a multi-stage build (frontend stage → `vite build`; backend stage → `tsc + tsc-alias`; slim runtime stage with prod-only deps, non-root `node` user, and a `HEALTHCHECK` hitting `/health/ready`). `compose.prod.yaml` runs app + MongoDB with `restart: unless-stopped`, `init: true` (tini → clean `SIGTERM` forwarding), and a Mongo healthcheck; secrets come from a gitignored `.env.prod` (see `.env.prod.example`). `database.ts` traps **both** `SIGINT` and `SIGTERM` so `docker stop`/rolling deploys drain the Mongoose pool gracefully. `npm run build && npm start` still works for a non-containerized VM (systemd). See `README.md` for commands.
 
 ## Frontend architecture
 

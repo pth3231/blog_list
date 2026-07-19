@@ -18,6 +18,9 @@ Backend (run in `backend/`):
 - `npm run lint` / `npm run lint:fix`.
 - `npm start` — runs the compiled build. In production the API also serves the
   built `frontend/dist` SPA on the same origin.
+- **Production:** `docker compose -f compose.prod.yaml up -d --build` (multi-stage
+  `Dockerfile`, `restart: unless-stopped`, `/health/ready` healthcheck, `init: true`).
+  Copy `.env.prod.example` → `.env.prod` first. See `README.md`.
 
 Frontend (run in `frontend/`):
 - `npm run dev` (vite), `npm run build` (`tsc -b && vite build`), `npm run lint`, `npm run preview`.
