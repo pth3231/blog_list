@@ -25,6 +25,11 @@ On the server (once):
    nano .env.prod        # set JWT_SECRET to:  openssl rand -hex 32
    ```
    This `/opt/blog_list` path must match `DEPLOY_DIR` in `deploy.yml`.
+4. **A user with `sudo`** — every step below uses it. If your account reports
+   "_ is not in the sudoers file", become root another way first (provider
+   web/recovery console, `ssh root@server`, or `su -` with the root password),
+   then as root run `usermod -aG sudo "$USER"` and log back in. Debian uses the
+   `sudo` group; RHEL-family uses `wheel`.
 
 > The clone stays on the server permanently. `.env.prod` is gitignored, so the
 > later `git pull`/`git reset` in the workflow never overwrites it.
@@ -90,7 +95,7 @@ running in the background. Useful commands:
 sudo ./svc.sh status       # is it running?
 sudo ./svc.sh stop         # stop it
 sudo ./svc.sh uninstall    # remove the service (keeps the config)
-journalctl -u actions.<USER>.actions-runner.service -f   # tail runner logs
+journalctl -u 'actions.runner.*' -f   # tail runner logs
 ```
 
 > The service runs as **the user who installed it**. If that's not your main
@@ -137,14 +142,60 @@ You can also run it on demand: **Actions → Deploy → Run workflow**.
 
 ---
 
+## Logs
+
+Where to look depends on what you're debugging:
+
+- **A specific workflow run** — repo → **Actions** tab → click the run → expand a step. This is the per-job log (e.g. the "Run docker compose … / Process completed with exit code 1" output).
+- **The runner itself** (job pickup, dropped connections, worker startup) — these live in the install dir, not systemd:
+  ```bash
+  cd ~/actions-runner
+  ls -lt _diag/                       # newest first
+  tail -n 100 -f _diag/Runner_*.log   # listener + worker, live
+  tail -n 200 _diag/Worker_*.log      # last job's worker (richer than the UI)
+  ```
+- **The runner service** (installed via `svc.sh`) — `sudo journalctl -u 'actions.runner.*' -f`.
+- **The app / containers** (HTTP logs, MongoDB connection errors, health-check failures) — `docker compose -f compose.prod.yaml logs -f --tail=100 app`.
+- **Docker daemon / SSH** — `sudo journalctl -u docker -f`, `sudo journalctl -u ssh -f`.
+
+---
+
 ## Notes & troubleshooting
 
 - **Token expired?** The `--token` from Step 1 is single-use and short-lived. If
   `config.sh` fails with an auth error, regenerate it from the GitHub UI.
 - **Job stuck "queued", never runs:** the runner is offline. Check
   `sudo ./svc.sh status` and `journalctl -u actions.*.service`.
-- **"permission denied while trying to connect to the Docker daemon":** Step 4
-  wasn't applied to the user the service runs as, or the service wasn't restarted.
+- **"permission denied while trying to connect to the docker API at
+  unix:///var/run/docker.sock"** (in the Deploy log): the *runner process* can't
+  reach the socket — and it's a separate process from your login shell, so
+  re-logging in does nothing. Check three things on the server:
+  ```bash
+  ls -l /var/run/docker.sock                       # expect srw-rw---- root docker
+  getent group docker                              # expect ...docker:x:<gid>:<user>
+  systemctl show 'actions.runner.*' -p User -P     # the user the service runs as
+  ```
+  - Socket group **not** `docker` (shows `root`, or a bare number)? Restart the
+    daemon to reset it: `sudo systemctl restart docker`. If it persists, add
+    `{"group":"docker"}` to `/etc/docker/daemon.json` and restart.
+  - Service runs as a user **not** in the `docker` group? Add *that* user
+    (`sudo usermod -aG docker <that-user>`), then `sudo ./svc.sh stop && sudo
+    ./svc.sh start`.
+  - Right user, has the group, **still denied**? You skipped restarting the
+    service after the `usermod`. Its groups are frozen at process start — only a
+    restart picks up the new group.
+- **No `actions.runner.*` service and no `Runner.Listener` process** — the runner
+  was started interactively (`./run.sh`) and died when the terminal closed.
+  Install it as a service (Step 3). To find a runner install dir on the box:
+  `find / -name '.runner' 2>/dev/null` (every runner leaves that marker file).
+- **"_ is not in the sudoers file"** running any `sudo` step — see Prerequisites
+  item 4: become root another way, then `usermod -aG sudo "$USER"`.
+- **Enabled SSH via a desktop GUI toggle and it silently reverted** — on recent
+  Debian, SSH is socket-activated (`ssh.socket`), so the toggle reads
+  `ssh.service` as inactive and shows off even while SSH works. Set it directly
+  and ignore the GUI: `sudo systemctl enable --now ssh.socket`. If logins are
+  refused with the service up, check `/etc/ssh/sshd_config` for
+  `AllowUsers`/`AllowGroups`/`PasswordAuthentication`.
 - **Runner updates itself** automatically; no manual upgrade needed in normal use.
 - **More than one server?** Register a runner on each; `runs-on: self-hosted` will
   pick any free one. (For targeted deploys, give each a unique label and set
