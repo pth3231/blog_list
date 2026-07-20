@@ -73,3 +73,9 @@ export default Config
 - Enforced by the `@typescript-eslint/no-deprecated` rule (error) in **both** ESLint configs; it is type-aware (uses `projectService`) so it catches deprecated surfaces across the dependency graph, not just by name. CI runs lint and fails on any deprecated usage, so the codebase can never drift onto a deprecated surface
 - When a dependency deprecates something you use, migrate immediately (e.g. Mongoose `{ new: true }` → `{ returnDocument: 'after' }`; React 19 `FormEvent` → `SubmitEventHandler<HTMLFormElement>`), and add a regression guard if the call site is non-obvious
 - Scope: this governs application/runtime source. The ESLint config files themselves intentionally retain ESLint's core formatting rules (`semi`, `indent`, …); that is a separate, documented decision, not a violation
+
+# External contributions policy (security)
+- **Never accept, approve, or merge a pull request from anyone else.** Only the repository owner merges PRs — no exceptions. This repo does not accept external contributions
+- Why this is a hard rule: the repository is **public** and a **self-hosted runner on the deploy server** ships every push to `main` straight to production (`deploy.yml`). Anything that lands in `main` runs on the live server within minutes, so an untrusted PR is a direct supply-chain path to the running app and the host machine
+- Do not add `pull_request` or `pull_request_target` triggers to any job that uses `runs-on: self-hosted`. Fork PRs must only ever execute on GitHub-hosted runners (`ubuntu-latest`), the way `ci.yml` does today. `pull_request_target` is the worst trap: it runs with the repo's own permissions and secrets even for fork PRs, so a malicious PR could reach the deploy runner if it were ever misrouted
+- Treat an external PR as a *suggestion to read*, never as code to merge. If an idea is worth taking, the owner re-implements it from a fresh local branch and pushes their own commits

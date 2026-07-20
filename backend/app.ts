@@ -13,7 +13,18 @@ const app = express()
 const logger = new ConsoleLogger()
 const isProduction = process.env['NODE_ENV'] === 'production'
 
-app.use(helmet())
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+            // We serve over plain HTTP (no TLS terminator in front), so drop
+            // helmet's default `upgrade-insecure-requests` — it rewrites asset
+            // URLs to https:// and breaks loading with ERR_SSL_PROTOCOL_ERROR.
+            // Re-add it once the app is served behind HTTPS.
+            'upgrade-insecure-requests': null
+        }
+    }
+}))
 // Behind a proxy/load-balancer in prod — required for accurate client IPs used
 // by express-rate-limit.
 app.set('trust proxy', 1)
