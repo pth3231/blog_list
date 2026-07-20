@@ -1,0 +1,56 @@
+name: Deploy
+
+# WHEN this runs: on every push to main, and manually from the GitHub "Actions" tab.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# If you push twice in a row, don't let two deploys collide.
+# cancel-in-progress: false = let the running one finish, then run the next.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # THE KEY LINE: "self-hosted" means "run this job on MY machine", not on
+    # GitHub's cloud runners. The self-hosted runner you register polls GitHub
+    # for jobs (outbound HTTPS only — no inbound port to open).
+    runs-on: self-hosted
+
+    env:
+      # Where the repo lives on the server. Set this to wherever you cloned it.
+      DEPLOY_DIR: /opt/blog_list
+
+    steps:
+      # 1) Sync the repo on the server to exactly match origin/main.
+      #    We do NOT use actions/checkout here: that makes a throwaway copy
+      #    without your gitignored .env.prod. Instead we keep one permanent
+      #    clone and update it in place. .env.prod is gitignored, so this
+      #    never overwrites it.
+      - name: Pull latest code
+        working-directory: ${{ env.DEPLOY_DIR }}
+        run: |
+          git fetch --prune
+          git reset --hard origin/main
+
+      # 2) Rebuild the image from the new code and recreate changed containers.
+      #    --build = rebuild the image; -d = run detached; up only recreates
+      #    containers whose config/image changed, then (re)starts them.
+      - name: Build image and (re)create containers
+        working-directory: ${{ env.DEPLOY_DIR }}
+        run: docker compose -f compose.prod.yaml up -d --build
+
+      # 3) Give the app a moment to connect to MongoDB before probing.
+      - name: Wait for startup
+        run: sleep 10
+
+      # 4) Fail the workflow if the app isn't healthy after deploy.
+      #    (--fail makes curl exit non-zero on any HTTP >= 400.)
+      - name: Health check
+        run: curl --fail --silent --show-error http://localhost:3000/health/ready
+
+      # 5) Tidy up old build layers so the disk doesn't fill up over time.
+      - name: Prune dangling images
+        run: docker image prune -f

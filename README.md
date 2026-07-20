@@ -96,6 +96,24 @@ cd backend && npm run build   # emits to backend/dist
 cd frontend && npm run build  # tsc -b && vite build
 ```
 
+## Production (Docker)
+
+A multi-stage `Dockerfile` builds both packages into a single production image; in production the backend serves the built SPA on the same origin. `compose.prod.yaml` runs the app + MongoDB with `restart: unless-stopped`, a readiness healthcheck (`/health/ready`), and `init: true` (tini as PID 1 for clean `SIGTERM` handling on `docker stop`/rolling deploys).
+
+```bash
+cp .env.prod.example .env.prod        # then edit JWT_SECRET (openssl rand -hex 32)
+docker compose -f compose.prod.yaml up -d --build   # build & start
+docker compose -f compose.prod.yaml ps              # status + health
+docker compose -f compose.prod.yaml logs -f app     # tail app logs
+docker compose -f compose.prod.yaml down            # stop & remove
+```
+
+The app is published on `${PORT:-3000}` (override the host port with `PORT=8080 docker compose …`). Using **MongoDB Atlas** instead of local Mongo? Set `MONGODB_URI` in `.env.prod` to your Atlas URI and delete the `mongo` service + the app's `depends_on` block in `compose.prod.yaml`. Never commit `.env.prod` (it's gitignored).
+
+## Continuous deployment
+
+To have your own server auto-pull and redeploy on every push to `main` (via a GitHub **self-hosted runner**), follow [`docs/deployment.md`](./docs/deployment.md). It covers registering the machine as a deployment target, installing the runner as a service, and how `.github/workflows/deploy.yml` drives the deploy.
+
 ## Testing
 
 Backend integration tests (`backend/tests/integration/*`) hit a **real** MongoDB — no mocks. Each suite uses a unique database via `uniqueDbUri()`. The `vitest` config hardcodes `JWT_SECRET`, so tests need no `.env`.
