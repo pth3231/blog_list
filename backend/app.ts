@@ -17,11 +17,12 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-            // We serve over plain HTTP (no TLS terminator in front), so drop
-            // helmet's default `upgrade-insecure-requests` — it rewrites asset
-            // URLs to https:// and breaks loading with ERR_SSL_PROTOCOL_ERROR.
-            // Re-add it once the app is served behind HTTPS.
-            'upgrade-insecure-requests': null
+            // Allow the Cloudflare Web Analytics beacon (injected at the edge):
+            // the script host and the host it POSTs RUM data to. Drop both if
+            // you disable Web Analytics. The theme script is external
+            // (/theme-init.js, covered by 'self'), so no inline-script hash.
+            'script-src': ["'self'", 'https://static.cloudflareinsights.com'],
+            'connect-src': ["'self'", 'https://cloudflareinsights.com']
         }
     }
 }))
