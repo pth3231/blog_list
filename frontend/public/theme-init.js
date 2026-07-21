@@ -1,7 +1,5 @@
-// Applied before paint (loaded synchronously in <head>) to set the saved theme
-// and avoid a flash of the wrong theme. Kept external (not inline) so the CSP
-// can stay strict (`script-src 'self'`) with no inline-script hash to maintain —
-// edit this file freely, the policy never needs updating.
+// Loaded synchronously in <head> to set the saved theme before paint (no flash).
+// External so the CSP stays strict (`script-src 'self'`) with no inline hash.
 (function () {
     try {
         const stored = localStorage.getItem('theme')

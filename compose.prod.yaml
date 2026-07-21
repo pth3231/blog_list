@@ -1,5 +1,7 @@
-# Production stack: the app (built from ./Dockerfile) + MongoDB, both with
-# auto-restart. Copy .env.prod.example -> .env.prod and fill in real secrets.
+# Production stack: the app (built from ./Dockerfile) + MongoDB + a Cloudflare
+# Tunnel (cloudflared) for public HTTPS with no inbound port. Copy
+# .env.prod.example -> .env.prod and fill in real secrets (incl. TUNNEL_TOKEN —
+# see docs/cloudflare-tunnel.md to create a tunnel and route your domain).
 #
 #   docker compose -f compose.prod.yaml up -d --build   # build & start
 #   docker compose -f compose.prod.yaml logs -f app     # tail app logs

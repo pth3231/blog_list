@@ -110,6 +110,11 @@ docker compose -f compose.prod.yaml down            # stop & remove
 
 The app is published on `${PORT:-3000}` (override the host port with `PORT=8080 docker compose …`). Using **MongoDB Atlas** instead of local Mongo? Set `MONGODB_URI` in `.env.prod` to your Atlas URI and delete the `mongo` service + the app's `depends_on` block in `compose.prod.yaml`. Never commit `.env.prod` (it's gitignored).
 
+**Public HTTPS** runs through the `tunnel` service (Cloudflare `cloudflared`) —
+no inbound port to open and an automatic edge certificate. Put your tunnel token
+in `TUNNEL_TOKEN` (`.env.prod`) and follow [`docs/cloudflare-tunnel.md`](./docs/cloudflare-tunnel.md)
+to route your domain.
+
 ## Continuous deployment
 
 To have your own server auto-pull and redeploy on every push to `main` (via a GitHub **self-hosted runner**), follow [`docs/deployment.md`](./docs/deployment.md). It covers registering the machine as a deployment target, installing the runner as a service, and how `.github/workflows/deploy.yml` drives the deploy.

@@ -17,15 +17,10 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-            // helmet's defaults are a strict baseline — including
-            // `upgrade-insecure-requests`, now correct that we serve behind
-            // HTTPS. The only deviations are for Cloudflare Web Analytics (its
-            // beacon is injected at the edge): allow the CDN script host and the
-            // host it POSTs RUM data to. Drop both entries below if you disable
-            // Cloudflare Web Analytics in the dashboard, for a pure default CSP.
-            //
-            // The pre-paint theme script is external (/theme-init.js, covered by
-            // 'self') — so there is no inline-script hash to maintain on edits.
+            // Allow the Cloudflare Web Analytics beacon (injected at the edge):
+            // the script host and the host it POSTs RUM data to. Drop both if
+            // you disable Web Analytics. The theme script is external
+            // (/theme-init.js, covered by 'self'), so no inline-script hash.
             'script-src': ["'self'", 'https://static.cloudflareinsights.com'],
             'connect-src': ["'self'", 'https://cloudflareinsights.com']
         }
