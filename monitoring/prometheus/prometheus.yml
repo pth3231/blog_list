@@ -1,0 +1,53 @@
+# Prometheus scrape config for the blog-list monitoring stack.
+#
+# Scrapes the four sources behind the Grafana dashboard:
+#   - prometheus      self-monitoring
+#   - cadvisor        per-container CPU/memory (filters on the `name` label)
+#   - node-exporter   host CPU/memory
+#   - blackbox        HTTP probes -> availability (probe_success) + latency
+#                     (probe_duration_seconds, a gauge)
+#
+# Blackbox targets use the CONTAINER NAME `blog-list-app`, not the compose
+# service alias `app` — this stack is a separate compose project, so only the
+# container name resolves reliably on the shared `blog-list` network.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'blog-list-monitoring'
+
+scrape_configs:
+  # 1. Prometheus self-monitoring.
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # 2. cAdvisor — container CPU/mem for blog-list-app (and every container).
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  # 3. node-exporter — host CPU/mem.
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # 4. blackbox-exporter — HTTP probes for availability + latency.
+  #    Canonical pattern: rewrite each target into ?target=<URL> against the
+  #    blackbox-exporter, preserving the original URL as the `target` label.
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://blog-list-app:3000/health/ready   # availability + readiness latency
+          - http://blog-list-app:3000/v1/posts        # real read-API latency (anonymous)
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: target
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

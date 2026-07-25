@@ -1,0 +1,11 @@
+# Auto-provisioned Prometheus datasource. The fixed `uid: Prometheus` is what
+# the dashboard JSON references in each panel's `datasource.uid`.
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    uid: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090      # service-name DNS on the blog-list network
+    isDefault: true
+    editable: true

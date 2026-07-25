@@ -1,0 +1,91 @@
+# Development stack: the app (built from ./Dockerfile) + MongoDB
+#
+#   docker compose -f compose.dev.yaml up -d --build   # build & start
+#   docker compose -f compose.dev.yaml logs -f app     # tail app logs
+#   docker compose -f compose.dev.yaml ps              # health/status
+#   docker compose -f compose.dev.yaml down            # stop & remove
+#
+# Publish on a different host port: `PORT=8080 docker compose -f compose.dev.yaml up -d`
+#
+# Using MongoDB Atlas? Set MONGODB_URI in .env.dev to your Atlas URI and
+# delete the `mongo` service plus the app's `depends_on` block below.
+
+services:
+  app:
+    build: .
+    image: blog-list-app:latest
+    container_name: blog-list-app
+    init: true                      # tini as PID 1 -> correct SIGTERM forwarding + zombie reaping
+    restart: unless-stopped         # auto-restart on crash, and after host reboot
+    env_file:
+      - .env.dev
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      FRONTEND_DIST: /app/frontend-dist
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  mongo:
+    image: mongo:noble
+    container_name: blog-list-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Live Vite dev server with HMR, for frontend development. Source is bind-
+  # mounted so edits reflect instantly; an anonymous volume keeps the container's
+  # own node_modules (host node_modules is not used). Proxies /v1 to the backend
+  # so the SPA's relative API calls work. Open http://localhost:5173.
+  #
+  #   docker compose -f compose.dev.yaml up -d frontend
+  frontend:
+    image: node:24-slim
+    container_name: blog-list-frontend-dev
+    working_dir: /app
+    command: sh -c "npm install --silent && npm run dev -- --host 0.0.0.0 --port 5173"
+    environment:
+      VITE_DEV_PROXY_TARGET: http://app:3000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    depends_on:
+      app:
+        condition: service_healthy
+
+  # mongo-express — web UI to inspect the blog_list MongoDB (browse collections
+  # and documents, run ad-hoc queries). Dev-only and localhost-bound — never
+  # expose a DB admin UI, so do NOT add this to compose.prod.yaml. Auto-starts
+  # with the dev stack.
+  #   open http://localhost:8081   (admin / pass)
+  mongo-express:
+    image: mongo-express:1.0.2
+    container_name: blog-list-mongo-express
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongo:27017/blog_list
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: pass
+    ports:
+      - "127.0.0.1:${MONGO_EXPRESS_PORT:-8081}:8081"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+volumes:
+  mongo-data:
+
+networks:
+  default:
+    name: blog-list
