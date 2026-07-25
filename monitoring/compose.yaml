@@ -1,0 +1,112 @@
+# Monitoring stack — Prometheus + Grafana + exporters.
+#
+# Joins the existing `blog-list` network as external: TRUE. It observes the
+# already-running `blog-list-app` container; it does NOT rebuild or duplicate
+# the app. Start the app stack FIRST so the `blog-list` network exists.
+#
+#   docker compose -f monitoring/compose.yaml up -d      # start
+#   docker compose -f monitoring/compose.yaml ps         # status
+#   docker compose -f monitoring/compose.yaml down       # stop & remove
+#
+# Grafana UI:  http://localhost:3001   (admin / admin)   — localhost-only
+#
+# Only Grafana is published (and bound to 127.0.0.1). Prometheus, cAdvisor,
+# node-exporter and blackbox-exporter are reachable only on the `blog-list`
+# Docker network. In prod the app is public via Cloudflare tunnel; Grafana and
+# the exporters must never be tunnelled.
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.13.1
+    container_name: blog-list-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    # port 9090 intentionally NOT published — see README.md debug step to
+    # verify targets via a temporary 127.0.0.1:9090:9090 publish.
+
+  grafana:
+    image: grafana/grafana:13.1.1
+    container_name: blog-list-grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin      # safe ONLY because the port is localhost-bound
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_AUTH_ANONYMOUS_ENABLED: 'false'
+    ports:
+      - '127.0.0.1:3001:3000'                # localhost-only — never expose via Cloudflare
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: blog-list-cadvisor
+    restart: unless-stopped
+    # Host mounts so cAdvisor can read cgroupfs + Docker state. Works
+    # unprivileged on most cgroups-v2 hosts; if container_* metrics come back
+    # empty, add `privileged: true`.
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg
+
+  node-exporter:
+    image: prom/node-exporter:v1.12.1
+    container_name: blog-list-node-exporter
+    restart: unless-stopped
+    pid: host
+    command:
+      - '--path.rootfs=/host'
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/root:ro
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.28.0
+    container_name: blog-list-blackbox
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/blackbox_exporter/config.yml'
+    volumes:
+      - ./prometheus/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+
+  # Load generator (k6). One-shot, run on demand via the `load` profile so it
+  # never starts with the rest of the stack. Drives traffic at the app over the
+  # shared `blog-list` network so the Grafana latency/CPU/mem panels get data.
+  #
+  #   docker compose -f monitoring/compose.yaml --profile load run --rm k6
+  k6:
+    image: grafana/k6:2.1.0
+    container_name: blog-list-k6
+    profiles: [load]
+    volumes:
+      - ./k6:/scripts:ro
+    environment:
+      APP_BASE_URL: http://blog-list-app:3000
+    command: ['run', '/scripts/loadtest.js']
+
+volumes:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  default:
+    name: blog-list
+    external: true

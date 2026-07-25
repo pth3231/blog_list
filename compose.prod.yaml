@@ -57,3 +57,16 @@ services:
 
 volumes:
   mongo-data:
+
+# Name the default network `blog-list` so the monitoring stack
+# (monitoring/compose.yaml) can attach to it as `external: true` in BOTH dev and
+# prod. dev (compose.dev.yaml) already names its network `blog-list`; without
+# this block prod's default is auto-named `blog_list_default` and monitoring
+# cannot reach `blog-list-app`.
+#
+# Operational note: the first `up` after this change recreates the prod
+# containers as they reattach to the renamed network — expect seconds of
+# downtime. See monitoring/README.md.
+networks:
+  default:
+    name: blog-list

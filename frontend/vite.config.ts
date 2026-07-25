@@ -19,9 +19,16 @@ export default defineConfig({
     server: {
         proxy: {
             '/v1': {
-                target: 'http://localhost:3000',
+                // Local dev -> http://localhost:3000 (backend on the host).
+                // Under docker compose -> http://app:3000 (set VITE_DEV_PROXY_TARGET).
+                target: process.env['VITE_DEV_PROXY_TARGET'] ?? 'http://localhost:3000',
                 changeOrigin: true
             }
+        },
+        watch: {
+            // inotify propagates over bind mounts on native Linux; enable polling
+            // only under Docker Desktop (macOS/Windows) where it does not.
+            usePolling: process.env['VITE_DEV_WATCH_POLLING'] === 'true'
         }
     }
 })

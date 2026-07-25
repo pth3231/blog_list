@@ -8,7 +8,13 @@
 FROM node:24-slim AS frontend-build
 WORKDIR /build/frontend
 COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci
+# Smoke-test the native binding in the SAME layer as the install: npm treats
+# optionalDependency fetch failures as non-fatal (exit 0), so a transient
+# registry hiccup on lightningcss-linux-x64-gnu would otherwise leave a broken
+# node_modules that BuildKit happily caches and reuses forever. Requiring
+# lightningcss forces its native binary to load — a missing binary fails the
+# layer loudly instead of silently, and a failed layer is never cached.
+RUN npm ci && node -e "require('lightningcss')"
 COPY frontend/ ./
 RUN npm run build
 

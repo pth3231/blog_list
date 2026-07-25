@@ -1,0 +1,13 @@
+# blackbox-exporter module config. Internal HTTP only, so no TLS concerns.
+# `http_2xx` treats any 2xx response as success.
+modules:
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      valid_http_versions: ['HTTP/1.1', 'HTTP/2.0']
+      valid_status_codes: []          # any 2xx is success
+      method: GET
+      preferred_ip_protocol: 'ip4'
+      ip_protocol_fallback: false
+      follow_redirects: true
