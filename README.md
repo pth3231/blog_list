@@ -5,23 +5,18 @@ A full-stack blog-link aggregator: users register, post interesting article link
 ```
 .
 ├── backend/     Express + TypeScript REST API (MongoDB via Mongoose)
-└── frontend/    React 19 + Vite + Tailwind v4 SPA (Zustand, React Router 7)
-```
+├── frontend/    React 19 + Vite + Tailwind v4 SPA (Zustand, React Router 7)
+└── monitoring/  Grafana dashboard + Prometheus for general monitoring, k6 for simulated stress test.
+``` 
 
 ## Architecture
 
 ### Backend (`backend/`)
 
-A layered Express 5 API (CommonJS, compiled with `tsc` + `tsc-alias`). Requests flow in a strict direction:
-
-```
-route  →  controller  →  model (Mongoose)
-  ↑           │
-  └── ServiceResult (typed success/failure envelope)
-```
+Mainly monolithic architecture, powered by Docker, but can easily migrate to microservices if needed. Standardized result return using `ServiceResult` for consistent responses.
 
 - **`routes/`** — HTTP boundary only. Validates input, authenticates, and translates a `ServiceResult` into a response via the shared helpers in `utils/http_response.ts` (`sendResult`, `parseObjectIdParam`).
-- **`controllers/`** — business logic / data access. Every function returns a `ServiceResult<T>` (`{ ok: true, value }` or `{ ok: false, status, message }`), so failures never throw across the boundary.
+- **`controllers/`** — business logic / data access. Every function returns a `ServiceResult<T>` (`{ ok: true, value }` or `{ ok: false, status, message }`).
 - **`models/`** — Mongoose schemas (`user`, `post`, `comment`).
 - **`middlewares/`** — `authenticateToken` verifies the JWT and attaches `req.user`.
 - **`utils/`** — config, logger, DB connection, `ServiceResult` constructors, HTTP helpers.
@@ -58,14 +53,7 @@ Vite proxies `/v1` → `http://localhost:3000` (`vite.config.ts`), so in develop
 
 ## Conventions
 
-See [`CONVENTION.md`](./CONVENTION.md) for the full rules. Highlights:
-
-- No semicolons, single quotes, 4-space indent, no trailing commas.
-- Backend filenames are `snake_case` (`post.model.ts`); the frontend uses idiomatic React naming (`PostCard.tsx`, `authStore.ts`).
-- Interfaces are prefixed `I…`; functions are verb-led `camelCase`.
-- `null` (never `undefined`) represents an absent value; optional `?` parameters are the one accepted `undefined`.
-- Explicit return types on exported functions/store actions; guard clauses over `if/else` pyramids; no `any`.
-- Style is enforced by ESLint in **both** packages (`backend/eslint.config.mjs`, `frontend/eslint.config.js`).
+See [`CONVENTION.md`](./CONVENTION.md) for the full rules.
 
 ## Running locally
 
